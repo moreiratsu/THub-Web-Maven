@@ -41,7 +41,11 @@
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
+		
+			<!-- Dependencia de File Upload-->
+		
 	</dependencies>
+
 
 	<build>
 		<finalName>Thub-Web</finalName>
@@ -51,8 +55,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>21</source>
+					<target>21</target>
 				</configuration>
 			</plugin>
 			<plugin>
