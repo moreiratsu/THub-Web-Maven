@@ -16,7 +16,7 @@ import com.alvaro.thub.service.EventService;
 import com.alvaro.thub.service.ServiceException;
 import com.alvaro.thub.service.impl.EventServiceImpl;
 import com.alvaro.thub.utils.Results;
-import com.alvaro.thub.utils.Views;
+import com.alvaro.thub.utils.ConstantsUtils;
 
 /**
  * Servlet de Eventos 
@@ -49,7 +49,7 @@ public class EventServlet extends HttpServlet {
 			try {
 				EventDTO event = eventService.findById(Long.valueOf(idStr));
 				request.setAttribute("event", event);
-				request.getRequestDispatcher(Views.EVENT_DETAIL).forward(request, response);
+				request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -133,7 +133,7 @@ public class EventServlet extends HttpServlet {
 				// 3. Ejecución de la búsqueda con el criterio construido
 				Results<EventDTO> results = eventService.findBy(criteria, 1, Integer.MAX_VALUE);
 				request.setAttribute("results", results);
-				request.getRequestDispatcher(Views.EVENT_SEARCH).forward(request, response);
+				request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
 				
 			} catch (ServiceException se) {
 				se.printStackTrace();
@@ -149,7 +149,7 @@ public class EventServlet extends HttpServlet {
 				// Tras eliminar, refrescamos la lista
                 Results<EventDTO> results = eventService.findBy(new EventCriteria(), 1, Integer.MAX_VALUE);
                 request.setAttribute("results", results);
-                request.getRequestDispatcher(Views.EVENT_SEARCH).forward(request, response);
+                request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
 			} catch (ServiceException se) {
 				se.printStackTrace();
 				writer.append("<i>No ha podido borrarse el evento. Por favor contacte con su administrador</i>");

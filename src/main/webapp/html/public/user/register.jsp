@@ -150,7 +150,7 @@
 			<button type="submit" class="submit-btn submit-btn-register">Registrarse</button>
 
 			<!-- Enlace a Login -->
-			<a href="${pageContext.request.contextPath}/html/user/login.jsp"
+			<a href="${pageContext.request.contextPath}/html/public/user/login.jsp"
 				class="register-btn"> ¿Ya tienes cuenta? Inicia sesión </a>
 		</form>
 	</aside>

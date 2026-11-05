@@ -9,7 +9,7 @@
 <%
     // Verificación de sesión de usuario
     if (usuario == null) {
-        response.sendRedirect(request.getContextPath() + "/html/user/login.jsp");
+        response.sendRedirect(request.getContextPath() + "/html/public/user/login.jsp");
         return;
     }
 

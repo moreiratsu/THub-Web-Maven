@@ -7,11 +7,10 @@
 <%@ include file="/html/common/header.jsp"%>
 <%@ include file="/html/common/topbar.jsp"%>
 
-<%
-    
+<%   
     // Si no hay sesión iniciada, redirigimos al login
     if (usuario == null) {
-        response.sendRedirect(request.getContextPath() + "/html/user/login.jsp");
+        response.sendRedirect(request.getContextPath() + "/html/public/user/login.jsp");
         return;
     }
 
@@ -49,6 +48,28 @@
                 <%= errorMessage %>
             </div>
         <% } %>
+
+        <!-- Formulario para seleccionar y enviar la foto de perfil -->
+        <section class="search-card">
+            <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Foto de perfil</h2>
+			<!-- AQUI mostramos la foto de perfil actual del usuario, si existe , si no mostramos un placeholder -->
+
+			<form action="${pageContext.request.contextPath}/Usuario" method="POST" enctype="multipart/form-data">
+				<input type="hidden" name="action" value="uploadProfilePhoto"/>
+				<input type="hidden" name="saludo" value="saludo"/>
+
+                <div class="input-group">
+                    <label for="profilePhoto" class="field-label">SELECCIONA UNA IMAGEN</label>
+                    <input type="file" id="profilePhoto" name="photo" class="form-control"
+                           accept=".jpg,.jpeg,.png" aria-describedby="profilePhotoHelp"/>
+                    <small id="profilePhotoHelp">Formatos permitidos: JPG, JPEG o PNG.</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Subir foto</button>
+                </div>
+            </form>
+        </section>
 
         <!-- Tarjeta de Edición de Datos Personales -->
         <section class="search-card">

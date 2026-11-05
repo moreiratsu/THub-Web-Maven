@@ -158,7 +158,7 @@
 			<button type="submit" class="submit-btn">Iniciar Sesión</button>
 
 			<!-- Enlace de Registro -->
-			<a href="${pageContext.request.contextPath}/html/user/register.jsp" class="register-btn"> 
+			<a href="${pageContext.request.contextPath}/html/public/user/register.jsp" class="register-btn">
 				Crear cuenta 
 			</a>
 		</form>

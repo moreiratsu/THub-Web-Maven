@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.UserDTO" %>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
+
+<% UserDTO usuarioTopbar = (UserDTO) session.getAttribute(ConstantsUtils.USER_SESSION_ATTRIBUTE); %>
 
 <!-- BARRA SUPERIOR -->
 <header class="topbar">
@@ -41,10 +44,10 @@
       <%
         
         
-        if (usuario == null) {
+        if (usuarioTopbar == null) {
       %>
           <!-- Si NO está logueado: Muestra el botón para ir al login -->
-          <a href="${pageContext.request.contextPath}/html/user/login.jsp" class="role-badge">
+          <a href="${pageContext.request.contextPath}/html/public/user/login.jsp" class="role-badge">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -61,10 +64,10 @@
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <div class="user-badge-text">
-              <span class="user-name-text"><%= usuario.getName() %></span>
+              <span class="user-name-text"><%= usuarioTopbar.getName() %></span>
               <span class="user-role-text">
-                <%= usuario.getRolName() != null ? usuario.getRolName() : "Usuario" %>
-              </span>
+                <%= usuarioTopbar.getRolName() != null ? usuarioTopbar.getRolName() : "Usuario" %>
+               </span>
             </div>
           </a>
 

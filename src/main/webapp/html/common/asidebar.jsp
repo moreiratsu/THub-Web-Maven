@@ -1,7 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.UserDTO"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils"%>
 
 <%
+    UserDTO usuarioSidebar = (UserDTO) session.getAttribute(ConstantsUtils.USER_SESSION_ATTRIBUTE);
+
     // Detectamos la ruta o URL actual para saber qué elemento marcar como activo
     String currentURI = request.getRequestURI();
     boolean isIndex = currentURI.endsWith("index.jsp") || currentURI.endsWith("/");
@@ -10,10 +13,6 @@
     boolean isTeam = currentURI.contains("/team/");
     boolean isPlayer = currentURI.contains("/player/");
 
-    // Reutilizamos la variable 'usuario' declarada en header/topbar sin redeclararla
-    if (usuario == null) {
-        usuario = (UserDTO) session.getAttribute("usuario");
-    }
 %>
 
 <!-- Barra lateral -->
@@ -21,9 +20,9 @@
 	
 	<!-- Contenido del usuario en la barra lateral -->
 	<div class="sidebar-user-container">
-		<% if (usuario == null) { %>
+		<% if (usuarioSidebar == null) { %>
 		<!-- Si NO está logueado -->
-		<a href="${pageContext.request.contextPath}/html/user/login.jsp" class="user-profile user-profile-link">
+		<a href="${pageContext.request.contextPath}/html/public/user/login.jsp" class="user-profile user-profile-link">
 			<div class="avatar-circle">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 	              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -41,7 +40,7 @@
 	              <circle cx="12" cy="7" r="4"></circle>
 	            </svg>
 			</div> 
-			<span class="user-name"><%= usuario.getName() %></span>
+			<span class="user-name"><%= usuarioSidebar.getName() %></span>
 		</a>
 		<% } %>
 	</div>

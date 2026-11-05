@@ -1,45 +1,55 @@
 package com.alvaro.thub.servlet;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.alvaro.thub.model.ContentData;
+import com.alvaro.thub.model.ContentMetadata;
 import com.alvaro.thub.model.Gender;
-import com.alvaro.thub.model.LocalityDTO;
 import com.alvaro.thub.model.UserDTO;
+import com.alvaro.thub.service.ContentService;
 import com.alvaro.thub.service.GenderService;
 import com.alvaro.thub.service.LocalityService;
 import com.alvaro.thub.service.ServiceException;
 import com.alvaro.thub.service.UserService;
+import com.alvaro.thub.service.impl.ContentServiceFileImpl;
 import com.alvaro.thub.service.impl.GenderServiceImpl;
 import com.alvaro.thub.service.impl.LocalityServiceImpl;
 import com.alvaro.thub.service.impl.UserServiceImpl;
-import com.alvaro.thub.utils.Views;
+import com.alvaro.thub.utils.ConstantsUtils;
+import com.alvaro.thub.utils.SessionManager;
+import com.alvaro.thub.utils.WebUtils;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Servlet para login, logout, registro y gestión de perfil de Usuario.
  */
 @WebServlet("/Usuario")
 public class UserServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+	private static Logger logger = LogManager.getLogger(UserServlet.class);
 	
 	private UserService userService = null;
 	private LocalityService localityService = null;
 	private GenderService genderService = null;
+	private ContentService contentService = null;
 	
 	public UserServlet() {
 		super();
 		userService = new UserServiceImpl();
 		localityService = new LocalityServiceImpl();
 		genderService = new GenderServiceImpl();
+		contentService = new ContentServiceFileImpl();
 	}
 
 	/**
@@ -59,19 +69,23 @@ public class UserServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		
+		request.getParameterMap().forEach((key, value) -> {
+		    System.out.println("Parameter Name: " + key + ", Value: " + String.join(", ", value));
+		});
+		
 		String action = request.getParameter("action");
-		HttpSession session = request.getSession();
+		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 		
 		// ACCIÓN: MOSTRAR PERFIL
+		// todo: hacerlo en la parte de servlet provada
 		if ("showProfile".equalsIgnoreCase(action)) {
-			UserDTO sessionUser = (UserDTO) session.getAttribute("usuario");
-			if (sessionUser == null) {
-				response.sendRedirect(request.getContextPath() + Views.USER_LOGIN);
+			if (user == null) {
+				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
 				return;
 			}
 
 			cargarDesplegables(request);
-			request.getRequestDispatcher("/html/user/profile.jsp").forward(request, response);
+			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 			return;
 
 		// ACCIÓN: LOGIN
@@ -83,22 +97,22 @@ public class UserServlet extends HttpServlet {
 				UserDTO usuario = userService.login(email, password);
 
 				if (usuario != null) {
-					session.setAttribute("usuario", usuario);
-					request.getRequestDispatcher(Views.INDEX).forward(request, response);
+					SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, usuario);
+					request.getRequestDispatcher(ConstantsUtils.INDEX).forward(request, response);
 				} else {
 					request.setAttribute("error", "Email o contraseña incorrectos.");
-					request.getRequestDispatcher(Views.USER_LOGIN).forward(request, response);
+					request.getRequestDispatcher(ConstantsUtils.USER_LOGIN).forward(request, response);
 				}
 
 			} catch (ServiceException se) {
 				request.setAttribute("error", "Ocurrió un error al procesar el inicio de sesión.");
-				request.getRequestDispatcher(Views.USER_LOGIN).forward(request, response);
+				request.getRequestDispatcher(ConstantsUtils.USER_LOGIN).forward(request, response);
 			}
 
 		// ACCIÓN: LOGOUT
 		} else if ("logout".equalsIgnoreCase(action)) {
-			session.invalidate();
-			response.sendRedirect(request.getContextPath() + Views.INDEX);
+			SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, null);
+			response.sendRedirect(request.getContextPath() + ConstantsUtils.INDEX);
 
 		// ACCIÓN: REGISTRO
 		} else if ("register".equalsIgnoreCase(action)) {
@@ -110,7 +124,7 @@ public class UserServlet extends HttpServlet {
 
 			if (password == null || !password.equals(confirmPassword)) {
 				request.setAttribute("error", "Las contraseñas no coinciden.");
-				request.getRequestDispatcher("/html/user/register.jsp").forward(request, response);
+				request.getRequestDispatcher(ConstantsUtils.USER_REGISTER).forward(request, response);
 				return;
 			}
 
@@ -124,25 +138,25 @@ public class UserServlet extends HttpServlet {
 					newUser.setRolId(Long.valueOf(rolIdStr.trim()));
 				} catch (NumberFormatException e) {
 					request.setAttribute("error", "El rol seleccionado no es válido.");
-					request.getRequestDispatcher("/html/user/register.jsp").forward(request, response);
+					request.getRequestDispatcher(ConstantsUtils.USER_REGISTER).forward(request, response);
 					return;
 				}
 			}
 
 			try {
 				userService.register(newUser);
-				session.setAttribute("usuario", newUser);
-				response.sendRedirect(request.getContextPath() + Views.INDEX);
+				SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, newUser);
+				response.sendRedirect(request.getContextPath() + ConstantsUtils.INDEX);
 			} catch (ServiceException e) {
 				request.setAttribute("error", "Error al crear el usuario: " + e.getMessage());
-				request.getRequestDispatcher("/html/user/register.jsp").forward(request, response);
+				request.getRequestDispatcher(ConstantsUtils.USER_REGISTER).forward(request, response);
 			}
 
 		// ACCIÓN: ACTUALIZAR DATOS PERSONALES
 		} else if ("updateProfile".equalsIgnoreCase(action)) {
-			UserDTO sessionUser = (UserDTO) session.getAttribute("usuario");
-			if (sessionUser == null) {
-				response.sendRedirect(request.getContextPath() + Views.USER_LOGIN);
+			
+			if (user == null) {
+				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
 				return;
 			}
 
@@ -167,9 +181,9 @@ public class UserServlet extends HttpServlet {
 				userToUpdate.setEmail(email);
 				userToUpdate.setPhoneNumber(phoneNumber);
 				
-				userToUpdate.setRolId(sessionUser.getRolId());
-				userToUpdate.setRolName(sessionUser.getRolName());
-				userToUpdate.setPassword(sessionUser.getPassword());
+				userToUpdate.setRolId(user.getRolId());
+				userToUpdate.setRolName(user.getRolName());
+				userToUpdate.setPassword(user.getPassword());
 
 				if (bornDateStr != null && !bornDateStr.trim().isEmpty()) {
 					try {
@@ -178,7 +192,7 @@ public class UserServlet extends HttpServlet {
 					} catch (ParseException pe) {
 						cargarDesplegables(request);
 						request.setAttribute("error", "Formato de fecha de nacimiento no válido.");
-						request.getRequestDispatcher("/html/user/profile.jsp").forward(request, response);
+						request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 						return;
 					}
 				}
@@ -194,11 +208,7 @@ public class UserServlet extends HttpServlet {
 				boolean updated = userService.update(userToUpdate);
 
 				if (updated) {
-					UserDTO updatedUser = userService.findById(userToUpdate.getId());
-					session.setAttribute("usuario", updatedUser != null ? updatedUser : userToUpdate);
-					request.setAttribute("successMessage", "Perfil actualizado correctamente.");
-				} else {
-					request.setAttribute("error", "No se pudo actualizar el perfil.");
+					// TODO: Mensajes de error
 				}
 
 			} catch (Exception e) {
@@ -206,13 +216,14 @@ public class UserServlet extends HttpServlet {
 			}
 
 			cargarDesplegables(request);
-			request.getRequestDispatcher("/html/user/profile.jsp").forward(request, response);
+			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 
 		// ACCIÓN: ACTUALIZAR CONTRASEÑA
+			// TODO ACTUALIZAR
 		} else if ("updatePassword".equalsIgnoreCase(action)) {
-			UserDTO sessionUser = (UserDTO) session.getAttribute("usuario");
-			if (sessionUser == null) {
-				response.sendRedirect(request.getContextPath() + Views.USER_LOGIN);
+			
+			if (user == null) {
+				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
 				return;
 			}
 
@@ -223,19 +234,19 @@ public class UserServlet extends HttpServlet {
 			if (newPassword == null || !newPassword.equals(confirmNewPassword)) {
 				cargarDesplegables(request);
 				request.setAttribute("error", "Las nuevas contraseñas no coinciden.");
-				request.getRequestDispatcher("/html/user/profile.jsp").forward(request, response);
+				request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 				return;
 			}
 
 			try {
-				userService.updatePassword(sessionUser.getId(), oldPassword, newPassword);
+				userService.updatePassword(user.getId(), oldPassword, newPassword);
 				request.setAttribute("successMessage", "Contraseña actualizada con éxito.");
 			} catch (ServiceException e) {
 				request.setAttribute("error", "Error al cambiar la contraseña: " + e.getMessage());
 			}
 
 			cargarDesplegables(request);
-			request.getRequestDispatcher("/html/user/profile.jsp").forward(request, response);
+			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 		} 
 		// ACCIÓN: MOSTRAR FORMULARIO DE NUEVO EVENTO
 		else if ("showNewEvent".equalsIgnoreCase(action)) {
@@ -246,10 +257,37 @@ public class UserServlet extends HttpServlet {
 		    request.getRequestDispatcher("/html/event/NewEvent.jsp").forward(request, response);
 		    return;
 		}
+		// ACCIÓN: SUBIR FOTO DE PERFIL
+		else if ("uploadProfilePhoto".equalsIgnoreCase(action)) {
+			if (logger.isInfoEnabled()) {
+				logger.info("Guardando foto de perfil de " + user.getId());
+			}
+
+			byte[] bytesFoto = WebUtils.leerBytes(request, "photo");
+
+			ContentData c = new ContentData();
+			ContentMetadata cm = new ContentMetadata();
+			cm.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
+			cm.setEntityId(user.getId().toString());
+			cm.setResourceType(ConstantsUtils.USER_PROFILE_RESOURCE_TYPE);
+			cm.setFormat(".jpg");
+
+			c.setMetadata(cm);
+			c.setRaw(bytesFoto);
+			contentService.save(c);
+
+			if (logger.isInfoEnabled()) {
+				logger.info("Foto de perfil de " + user.getId() + " guardada.");
+			}
+
+			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
+		}
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		doGet(request, response);
 	}
+	
+	
 }
