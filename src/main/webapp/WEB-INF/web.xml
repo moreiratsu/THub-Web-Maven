@@ -19,9 +19,11 @@
 		<filter-class>com.alvaro.thub.filter.AuthenticationFilter</filter-class>
 	</filter>
 	
+	<!-- esto lo que hace es decirle al filtro las rutas que se van a filtrar (es decir las que tiene que comprobar el autenticationfilter que ele usuaer esta logueado) -->
 	<filter-mapping>
 		<filter-name>AuthenticationFilter</filter-name>
-		<url-pattern>/private/*</url-pattern>
+		<url-pattern>/Private/*</url-pattern> <!-- aqui por ejemplo filtra los servlets que controlan las peticiones de la parte privada -->
+		<url-pattern>/html/private/*</url-pattern> <!-- aqui filtra las jsp de la parte privada -->
 	</filter-mapping>
 	
 	

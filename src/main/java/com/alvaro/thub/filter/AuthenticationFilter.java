@@ -21,7 +21,6 @@ import jakarta.servlet.http.HttpServletResponse;
  * Filtro de autenticacion para la parte privada de la web (la que requiere que el usuario este logueado)
  */
 
- @WebFilter("/html/private/*")
 public class AuthenticationFilter extends HttpFilter implements Filter {
        
 

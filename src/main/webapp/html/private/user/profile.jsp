@@ -3,6 +3,7 @@
 <%@ page import="com.alvaro.thub.model.UserDTO"%>
 <%@ page import="com.alvaro.thub.model.LocalityDTO"%>
 <%@ page import="com.alvaro.thub.model.Gender"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
 
 <%@ include file="/html/common/header.jsp"%>
 <%@ include file="/html/common/topbar.jsp"%>
@@ -54,7 +55,7 @@
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Foto de perfil</h2>
 			<!-- AQUI mostramos la foto de perfil actual del usuario, si existe , si no mostramos un placeholder -->
 
-			<form action="${pageContext.request.contextPath}/Usuario" method="POST" enctype="multipart/form-data">
+			<form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>" method="POST" enctype="multipart/form-data">
 				<input type="hidden" name="action" value="uploadProfilePhoto"/>
 				<input type="hidden" name="saludo" value="saludo"/>
 
@@ -75,7 +76,7 @@
         <section class="search-card">
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Datos Personales</h2>
 
-            <form action="${pageContext.request.contextPath}/Usuario" method="POST">
+            <form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>" method="POST">
                 <input type="hidden" name="action" value="updateProfile">
                 <input type="hidden" name="id" value="<%= usuario.getId() %>">
 
@@ -188,7 +189,7 @@
         <section class="search-card">
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Seguridad</h2>
 
-            <form action="${pageContext.request.contextPath}/Usuario" method="POST">
+            <form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>" method="POST">
                 <input type="hidden" name="action" value="updatePassword">
                 <input type="hidden" name="id" value="<%= usuario.getId() %>">
 

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import com.alvaro.thub.model.ContentData;
 import com.alvaro.thub.model.ContentMetadata;
 import com.alvaro.thub.model.Gender;
+import com.alvaro.thub.model.LocalityDTO;
 import com.alvaro.thub.model.UserDTO;
 import com.alvaro.thub.service.ContentService;
 import com.alvaro.thub.service.GenderService;
@@ -33,18 +34,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Servlet para login, logout, registro y gestión de perfil de Usuario.
+ * Servlet que recibe las peticiones de la parte privada de la web (la que requiere que el usuario este logueado)
  */
-@WebServlet("/Usuario")
-public class UserServlet extends HttpServlet {
-	private static Logger logger = LogManager.getLogger(UserServlet.class);
+@WebServlet("/Private/User")
+public class PrivateUserServlet extends HttpServlet {
+	private static Logger logger = LogManager.getLogger(PrivateUserServlet.class);
 	
 	private UserService userService = null;
 	private LocalityService localityService = null;
 	private GenderService genderService = null;
 	private ContentService contentService = null;
 	
-	public UserServlet() {
+	public PrivateUserServlet() {
 		super();
 		userService = new UserServiceImpl();
 		localityService = new LocalityServiceImpl();
@@ -57,121 +58,49 @@ public class UserServlet extends HttpServlet {
 	 */
 	private void cargarDesplegables(HttpServletRequest request) {
 		try {
-		//	List<LocalityDTO> localidades = localityService.findAll();
+			List<LocalityDTO> localidades = localityService.findAll();
 			List<Gender> generos = genderService.findAll();
-			// request.setAttribute("localidades", localidades);
+			request.setAttribute("localidades", localidades);
 			request.setAttribute("generos", generos);
-		} catch (ServiceException e) {
-			request.setAttribute("error", "Error al cargar las listas desplegables: " + e.getMessage());
+		} catch (ServiceException se) {
+			logger.error("Error al cargar los desplegables", se);
 		}
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
-		request.getParameterMap().forEach((key, value) -> {
-		    System.out.println("Parameter Name: " + key + ", Value: " + String.join(", ", value));
-		});
-		
+
 		String action = request.getParameter("action");
+		// si llega hasta aqui, es que el usuario esta logueado, ya que el filtro AuthenticationFilter se encarga de redirigir al login si no lo esta
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 		
-		// ACCIÓN: MOSTRAR PERFIL
-		// todo: hacerlo en la parte de servlet provada
+		
+		
+		// ACCIÓN: MOSTRAR PERFIL -----------------------------------------------------------------------
 		if ("showProfile".equalsIgnoreCase(action)) {
-			if (user == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-				return;
-			}
 
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
-			return;
+			return; 
 
-		// ACCIÓN: LOGIN
-		} else if ("login".equalsIgnoreCase(action)) {
-			String email = request.getParameter("email");
-			String password = request.getParameter("password");
-
-			try {
-				UserDTO usuario = userService.login(email, password);
-
-				if (usuario != null) {
-					SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, usuario);
-					request.getRequestDispatcher(ConstantsUtils.INDEX).forward(request, response);
-				} else {
-					request.setAttribute("error", "Email o contraseña incorrectos.");
-					request.getRequestDispatcher(ConstantsUtils.USER_LOGIN).forward(request, response);
-				}
-
-			} catch (ServiceException se) {
-				request.setAttribute("error", "Ocurrió un error al procesar el inicio de sesión.");
-				request.getRequestDispatcher(ConstantsUtils.USER_LOGIN).forward(request, response);
-			}
-
-		// ACCIÓN: LOGOUT
-		} else if ("logout".equalsIgnoreCase(action)) {
-			SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, null);
-			response.sendRedirect(request.getContextPath() + ConstantsUtils.INDEX);
-
-		// ACCIÓN: REGISTRO
-		} else if ("register".equalsIgnoreCase(action)) {
-			String name = request.getParameter("name");
-			String email = request.getParameter("email");
-			String password = request.getParameter("password");
-			String confirmPassword = request.getParameter("confirmPassword");
-			String rolIdStr = request.getParameter("rolId");
-
-			if (password == null || !password.equals(confirmPassword)) {
-				request.setAttribute("error", "Las contraseñas no coinciden.");
-				request.getRequestDispatcher(ConstantsUtils.USER_REGISTER).forward(request, response);
-				return;
-			}
-
-			UserDTO newUser = new UserDTO();
-			newUser.setName(name);
-			newUser.setEmail(email);
-			newUser.setPassword(password);
-
-			if (rolIdStr != null && !rolIdStr.trim().isEmpty()) {
-				try {
-					newUser.setRolId(Long.valueOf(rolIdStr.trim()));
-				} catch (NumberFormatException e) {
-					request.setAttribute("error", "El rol seleccionado no es válido.");
-					request.getRequestDispatcher(ConstantsUtils.USER_REGISTER).forward(request, response);
-					return;
-				}
-			}
-
-			try {
-				userService.register(newUser);
-				SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, newUser);
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.INDEX);
-			} catch (ServiceException e) {
-				request.setAttribute("error", "Error al crear el usuario: " + e.getMessage());
-				request.getRequestDispatcher(ConstantsUtils.USER_REGISTER).forward(request, response);
-			}
-
-		// ACCIÓN: ACTUALIZAR DATOS PERSONALES
+				 
+		// ACCIÓN: ACTUALIZAR DATOS PERSONALES -----------------------------------------------------------
 		} else if ("updateProfile".equalsIgnoreCase(action)) {
 			
-			if (user == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-				return;
-			}
-
-			String idStr = request.getParameter("id");
-			String dni = request.getParameter("dni");
-			String name = request.getParameter("name");
-			String lastName1 = request.getParameter("lastName1");
-			String lastName2 = request.getParameter("lastName2");
-			String email = request.getParameter("email");
-			String phoneNumber = request.getParameter("phoneNumber");
-			String bornDateStr = request.getParameter("bornDate");
-			String genderIdStr = request.getParameter("genderId");
-			String localityIdStr = request.getParameter("localityId");
+			// pilla los valores que el usuario meta en el formulario de perfil
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			String dni = request.getParameter(ConstantsUtils.REQUEST_PARAM_DNI);
+			String name = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
+			String lastName1 = request.getParameter(ConstantsUtils.REQUEST_PARAM_LAST_NAME_1);
+			String lastName2 = request.getParameter(ConstantsUtils.REQUEST_PARAM_LAST_NAME_2);
+			String email = request.getParameter(ConstantsUtils.REQUEST_PARAM_EMAIL);
+			String phoneNumber = request.getParameter(ConstantsUtils.REQUEST_PARAM_PHONE);
+			String bornDateStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_BORN_DATE);
+			String genderIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_GENDER_ID);
+			String localityIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
 
 			try {
+				// crea un nuevo objeto UserDTO con los datos actualizados
 				UserDTO userToUpdate = new UserDTO();
 				userToUpdate.setId(Long.valueOf(idStr));
 				userToUpdate.setDni(dni);
@@ -179,24 +108,28 @@ public class UserServlet extends HttpServlet {
 				userToUpdate.setLastName1(lastName1);
 				userToUpdate.setLastName2(lastName2);
 				userToUpdate.setEmail(email);
-				userToUpdate.setPhoneNumber(phoneNumber);
-				
+				userToUpdate.setPhoneNumber(phoneNumber);			
 				userToUpdate.setRolId(user.getRolId());
 				userToUpdate.setRolName(user.getRolName());
 				userToUpdate.setPassword(user.getPassword());
-
+				
+				// como en la base de datos y el dto de usuario la variable de fecha es de tipo date
+				// tenemos que facer este paso intermedio de convertir el string que viene del formulario
+				// a un objeto date, para eso usamos SimpleDateFormat
 				if (bornDateStr != null && !bornDateStr.trim().isEmpty()) {
 					try {
 						Date bornDate = new SimpleDateFormat("yyyy-MM-dd").parse(bornDateStr.trim());
 						userToUpdate.setBornDate(bornDate);
 					} catch (ParseException pe) {
 						cargarDesplegables(request);
+						logger.error("Formato de fecha de nacimiento no válido: " + bornDateStr, pe);
 						request.setAttribute("error", "Formato de fecha de nacimiento no válido.");
 						request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 						return;
 					}
 				}
-
+				
+				// como genderId y localityId son opcionales, si no vienen en la request, no los seteamos en el objeto userToUpdate
 				if (genderIdStr != null && !genderIdStr.trim().isEmpty()) {
 					userToUpdate.setGenderId(Long.valueOf(genderIdStr.trim()));
 				}
@@ -208,56 +141,52 @@ public class UserServlet extends HttpServlet {
 				boolean updated = userService.update(userToUpdate);
 
 				if (updated) {
-					// TODO: Mensajes de error
+				    // Actualizamos el objeto en la sesión con los nuevos datos para que la vista los refleje al instante
+				    SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, userToUpdate);
+				    logger.info("Perfil de usuario actualizado correctamente: " + userToUpdate.getId());
+				    request.setAttribute("successMessage", "Perfil actualizado con éxito.");
 				}
 
-			} catch (Exception e) {
-				request.setAttribute("error", "Error al actualizar el perfil: " + e.getMessage());
+			} catch (ServiceException se) {
+			    logger.error("Error al actualizar el perfil para el ID: " + idStr, se);
+			    request.setAttribute("error", "Error al actualizar el perfil: " + se.getMessage());
 			}
 
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 
-		// ACCIÓN: ACTUALIZAR CONTRASEÑA
-			// TODO ACTUALIZAR
+			
+			
+		// ACCIÓN: ACTUALIZAR CONTRASEÑA ----------------------------------------------------------------
 		} else if ("updatePassword".equalsIgnoreCase(action)) {
 			
-			if (user == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-				return;
-			}
-
-			String oldPassword = request.getParameter("oldPassword");
-			String newPassword = request.getParameter("newPassword");
-			String confirmNewPassword = request.getParameter("confirmNewPassword");
-
+			String oldPassword = request.getParameter(ConstantsUtils.REQUEST_PARAM_OLD_PASSWORD);
+			String newPassword = request.getParameter(ConstantsUtils.REQUEST_PARAM_NEW_PASSWORD);
+			String confirmNewPassword = request.getParameter(ConstantsUtils.REQUEST_PARAM_CONFIRM_NEW_PASSWORD);
+			
+			// si la contraseña nueva y la confirmacion no coinciden, mostramos un error y volvemos a la pagina de perfil
 			if (newPassword == null || !newPassword.equals(confirmNewPassword)) {
 				cargarDesplegables(request);
+				logger.warn("Las nuevas contraseñas no coinciden para el usuario: " + user.getId());
 				request.setAttribute("error", "Las nuevas contraseñas no coinciden.");
 				request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 				return;
 			}
-
 			try {
 				userService.updatePassword(user.getId(), oldPassword, newPassword);
+				logger.info("Contraseña actualizada correctamente para el usuario: " + user.getId());
 				request.setAttribute("successMessage", "Contraseña actualizada con éxito.");
-			} catch (ServiceException e) {
-				request.setAttribute("error", "Error al cambiar la contraseña: " + e.getMessage());
+			} catch (ServiceException se) {
+				logger.error("Error al cambiar la contraseña para el usuario: " + user.getId(), se);
+				request.setAttribute("error", "Error al cambiar la contraseña: " + se.getMessage());
 			}
-
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 		} 
-		// ACCIÓN: MOSTRAR FORMULARIO DE NUEVO EVENTO
-		else if ("showNewEvent".equalsIgnoreCase(action)) {
-		    // Cargar las localidades para el desplegable
-		 //   List<LocalityDTO> localidades = localityService.findAll();
-		  //  request.setAttribute("localidades", localidades);
-		    
-		    request.getRequestDispatcher("/html/event/NewEvent.jsp").forward(request, response);
-		    return;
-		}
-		// ACCIÓN: SUBIR FOTO DE PERFIL
+		
+		
+		// ACCIÓN: SUBIR FOTO DE PERFIL -------------------------------------------------------------------
+		// TODO: PENDIENTE
 		else if ("uploadProfilePhoto".equalsIgnoreCase(action)) {
 			if (logger.isInfoEnabled()) {
 				logger.info("Guardando foto de perfil de " + user.getId());
@@ -284,6 +213,9 @@ public class UserServlet extends HttpServlet {
 		}
 	}
 
+	
+	
+	// este metodo se llama cuando el usuario hace un POST, y lo que hace es llamar al doGet, para que se ejecute el mismo codigo que en el doGet
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		doGet(request, response);

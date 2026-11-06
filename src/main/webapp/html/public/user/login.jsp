@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.UserDTO"%>
 <%@ page import="com.alvaro.thub.model.*"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
 
 <%@ include file="/html/common/header.jsp"%>
 
@@ -19,7 +20,7 @@
 
 			<!-- Logo -->
 			<a href="${pageContext.request.contextPath}/index.jsp">
-				<img src="${pageContext.request.contextPath}/img/logo.png" alt="Logo Darkness TCG" class="hero-logo">
+				<img src="${pageContext.request.contextPath}/img/logo.png" alt="Logo Thub" class="hero-logo">
 			</a>
 		</div>
 
@@ -78,8 +79,8 @@
 			</div>
 		<% } %>
 
-		<!-- Formulario apuntando directamente al Servlet Usuario -->
-		<form class="login-form" action="${pageContext.request.contextPath}/Usuario" method="POST">
+		<!-- Formulario apuntando directamente al Servlet PUBLICO de Usuario -->
+		<form class="login-form" action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>" method="POST">
 
 			<input type="hidden" name="action" value="login"> 
 			<span class="field-label">ROL</span>

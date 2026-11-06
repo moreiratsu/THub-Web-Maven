@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.UserDTO"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
 
 <%@ include file="/html/common/header.jsp"%>
 
@@ -65,9 +66,9 @@
 		}
 		%>
 
-		<!-- Formulario apuntando al UserServlet / Usuario con la acción register -->
+		<!-- Formulario apuntando al UserServlet publico -->
 		<form class="login-form"
-			action="${pageContext.request.contextPath}/Usuario" method="POST">
+			action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>" method="POST">
 
 			<input type="hidden" name="action" value="register">
 

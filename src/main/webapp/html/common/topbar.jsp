@@ -58,7 +58,7 @@
         } else { 
       %>
           <!-- Si SÍ está logueado: Llama a la acción showProfile del Servlet -->
-          <a href="${pageContext.request.contextPath}/Usuario?action=showProfile" class="role-badge role-badge-user">
+          <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?action=showProfile" class="role-badge role-badge-user">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -72,7 +72,7 @@
           </a>
 
           <!-- Botón de Cierre de Sesión -->
-          <a href="${pageContext.request.contextPath}/Usuario?action=logout" class="btn-primary" style="background-color: #222; color: #fff; text-decoration: none;">
+          <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>?action=logout" class="btn-primary" style="background-color: #222; color: #fff; text-decoration: none;">
             Salir
           </a>
       <% 

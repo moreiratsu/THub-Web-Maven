@@ -33,7 +33,7 @@
 		</a>
 		<% } else { %>
 		<!-- Si SÍ está logueado: Enlaza al Servlet mediante action=showProfile -->
-		<a href="${pageContext.request.contextPath}/Usuario?action=showProfile" class="user-profile <%= isProfile ? "active" : "" %>">
+		<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?action=showProfile" class="user-profile <%= isProfile ? "active" : "" %>">
 			<div class="avatar-circle">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 	              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
