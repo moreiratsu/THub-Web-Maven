@@ -4,11 +4,25 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
                              https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
          version="5.0">
-
+	
+	<!-- Nombre de la aplicación web -->
     <display-name>THub-Web</display-name>
-
+	
+	<!-- jsp que va a buscar de primeras -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
-
+    
+    <!-- Filtro -->
+	<filter>
+		<filter-name>AuthenticationFilter</filter-name>
+		<filter-class>com.alvaro.thub.filter.AuthenticationFilter</filter-class>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>AuthenticationFilter</filter-name>
+		<url-pattern>/private/*</url-pattern>
+	</filter-mapping>
+	
+	
 </web-app>

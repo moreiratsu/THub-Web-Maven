@@ -1,4 +1,4 @@
-package com.alvaro.thub.servlet;
+package com.alvaro.thub.controller;
 
 import java.io.IOException;
 import java.text.ParseException;

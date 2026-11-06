@@ -1,4 +1,4 @@
-package com.alvaro.thub.servlet;
+package com.alvaro.thub.controller;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
