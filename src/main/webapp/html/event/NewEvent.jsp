@@ -2,9 +2,10 @@
 <%@ page import="java.util.List"%>
 <%@ page import="com.alvaro.thub.model.UserDTO"%>
 <%@ page import="com.alvaro.thub.model.LocalityDTO"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
 
 <%@ include file="/html/common/header.jsp"%>
-<%@ include file="/html/common/topbar.jsp"%>
+<%@ include file="/html/common/topbar.jsp"%> 
 
 <%
     // Verificación de sesión de usuario
@@ -55,14 +56,14 @@
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 20px;">Información del Torneo / Evento</h2>
 
             <form action="${pageContext.request.contextPath}/Event" method="POST">
-                <input type="hidden" name="action" value="createEvent">
+                <input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="createEvent">
 
                 <div class="filter-grid">
                     
                     <!-- Nombre del Evento -->
                     <div class="input-group" style="grid-column: span 2;">
                         <label for="name" class="field-label">NOMBRE DEL EVENTO / TORNEO *</label>
-                        <input type="text" id="name" name="name" class="form-control" 
+                        <input type="text" id="name" name="<%= ConstantsUtils.REQUEST_PARAM_NAME %>" class="form-control" 
                                placeholder="Ej: Torneo Regional de Baloncesto 2026" required autocomplete="off">
                     </div>
 
@@ -76,7 +77,7 @@
                     <!-- Localidad -->
                     <div class="input-group">
                         <label for="localityId" class="field-label">LOCALIDAD *</label>
-                        <select id="localityId" name="localityId" class="form-control" required>
+                        <select id="localityId" name="<%= ConstantsUtils.REQUEST_PARAM_LOCALITY_ID %>" class="form-control" required>
                             <option value="">-- Selecciona Localidad --</option>
                             <% 
                                 if (localidades != null && !localidades.isEmpty()) {

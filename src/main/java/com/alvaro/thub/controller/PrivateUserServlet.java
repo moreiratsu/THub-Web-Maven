@@ -70,11 +70,9 @@ public class PrivateUserServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String action = request.getParameter("action");
+		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		// si llega hasta aqui, es que el usuario esta logueado, ya que el filtro AuthenticationFilter se encarga de redirigir al login si no lo esta
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
-		
-		
 		
 		// ACCIÓN: MOSTRAR PERFIL -----------------------------------------------------------------------
 		if ("showProfile".equalsIgnoreCase(action)) {
@@ -186,30 +184,68 @@ public class PrivateUserServlet extends HttpServlet {
 		
 		
 		// ACCIÓN: SUBIR FOTO DE PERFIL -------------------------------------------------------------------
-		// TODO: PENDIENTE
 		else if ("uploadProfilePhoto".equalsIgnoreCase(action)) {
-			if (logger.isInfoEnabled()) {
-				logger.info("Guardando foto de perfil de " + user.getId());
-			}
-
+			
+			// Leemos los bytes de la foto desde la request usando el método leerBytes de WebUtils
 			byte[] bytesFoto = WebUtils.leerBytes(request, "photo");
-
-			ContentData c = new ContentData();
-			ContentMetadata cm = new ContentMetadata();
-			cm.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
-			cm.setEntityId(user.getId().toString());
-			cm.setResourceType(ConstantsUtils.USER_PROFILE_RESOURCE_TYPE);
-			cm.setFormat(".jpg");
-
-			c.setMetadata(cm);
-			c.setRaw(bytesFoto);
-			contentService.save(c);
-
-			if (logger.isInfoEnabled()) {
-				logger.info("Foto de perfil de " + user.getId() + " guardada.");
+			
+			// si no selecciona nada, enviamos un mensaje de información y volvemos a la página de perfil
+			if (bytesFoto == null || bytesFoto.length == 0) {
+				cargarDesplegables(request);
+				logger.info("No se seleccionó ninguna foto");
+				request.setAttribute("error", "No se seleccionó ninguna foto.");
+				request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
+				return;
 			}
+			try {
+		        // Guardamos la foto en el servicio de contenido
+		        ContentData c = new ContentData();
+		        ContentMetadata cm = new ContentMetadata();
+		        cm.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
+		        cm.setEntityId(user.getId().toString()); // El ID del usuario logueado
+		        cm.setResourceType(ConstantsUtils.USER_PROFILE_RESOURCE_TYPE);
+		        cm.setFormat(".png"); // TODO: Podrías extraer la extensión real en el futuro si lo necesitas
+		        
+		        c.setMetadata(cm);
+		        c.setRaw(bytesFoto);
+		        contentService.save(c);
+		        
+		        SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, user);
+		        
+		        logger.info("Foto de perfil guardada correctamente para el usuario: " + user.getId());
+		        request.setAttribute("successMessage", "Foto de perfil actualizada con éxito."); // Mensaje de éxito successMessage
 
+		    } catch (ServiceException se) {
+		        logger.error("Error en el servicio al guardar la foto de perfil para el usuario: " + user.getId(), se);
+		        request.setAttribute("error", "Error al guardar la foto de perfil: " + se.getMessage());
+		    } catch (Exception e) {
+		        logger.error("Error inesperado al procesar la foto de perfil para el usuario: " + user.getId(), e);
+		        request.setAttribute("error", "Error inesperado al procesar la imagen.");
+		    }		
+			
+			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
+		} else if ("showProfilePhoto".equalsIgnoreCase(action)) {
+		    // ACCION = mostrar la foto de perfil del usuario ----------------------------------------------
+			// primero creamos un objeto ContentMetadata con los metadatos de la imagen de usuario 
+			ContentMetadata metadata = new ContentMetadata();
+			metadata.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
+			metadata.setEntityId(user.getId().toString());
+			metadata.setResourceType(ConstantsUtils.USER_PROFILE_RESOURCE_TYPE);
+			metadata.setFormat(".png");
+			
+			try {
+			    ContentData foto = contentService.get(metadata); // Obtiene la foto de perfil del usuario desde el servicio de contenido
+			    byte[] bytes = foto.getRaw(); // Obtiene los bytes de la foto
+
+			    response.setContentType("image/png");
+			    response.getOutputStream().write(bytes);
+			} catch (ServiceException se) {
+				logger.error("Error al obtener la foto de perfil para el usuario: " + user.getId(), se);
+			    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			}
+			return;		
+		
 		}
 	}
 

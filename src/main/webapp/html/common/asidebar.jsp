@@ -35,11 +35,20 @@
 		<!-- Si SÍ está logueado: Enlaza al Servlet mediante action=showProfile -->
 		<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?action=showProfile" class="user-profile <%= isProfile ? "active" : "" %>">
 			<div class="avatar-circle">
+			<!-- Cargamos la foto de perfil del usuario logueado mediante el Servlet, si no tiene foto se mostrará el icono por defecto del svg-->
+			<img
+    src="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=showProfilePhoto"
+    alt="Foto de perfil"
+    onload="this.nextElementSibling.style.display='none'; this.parentElement.classList.add('has-photo');"
+    onerror="this.style.display='none';">
+    <!-- onload: se ejecuta cuando la foto se ha cargado correctamente y oculta el SVG que aparece justo después de la imagen. -->
+    <!-- onerror: se ejecuta si no se puede cargar la foto —por ejemplo, porque el usuario aún no ha subido ninguna— y oculta la imagen fallida. Así queda visible el monigote. -->
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 	              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
 	              <circle cx="12" cy="7" r="4"></circle>
 	            </svg>
 			</div> 
+			<br>
 			<span class="user-name"><%= usuarioSidebar.getName() %></span>
 		</a>
 		<% } %>

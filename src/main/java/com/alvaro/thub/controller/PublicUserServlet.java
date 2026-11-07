@@ -41,7 +41,7 @@ public class PublicUserServlet extends HttpServlet {
 			throws ServletException, IOException {
 		
 		// lo primero de todo es sacar el parámetro action de la request, y el usuario de la sesión
-		String action = request.getParameter("action");
+		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		// para sacar el usuario de la sesión, usamos la clase SessionManager que es una clase de utilidad que hemos creado para manejar la sesión, y le pasamos el nombre del atributo de sesión que hemos definido en ConstantsUtils
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 		

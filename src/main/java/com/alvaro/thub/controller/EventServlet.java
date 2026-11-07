@@ -39,12 +39,12 @@ public class EventServlet extends HttpServlet {
 		PrintWriter writer = response.getWriter();
 		
 		// Obtenemos el parámetro action de la petición y se lo enganchamos a la variable action para saber que acción realizar
-		String action = request.getParameter("action");
+		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		
 		// si la action es "detail" se ejecuta el bloque de código para ver el detalle de un evento
 		if ("detail".equalsIgnoreCase(action)) {
 			// Action: Ver el detalle de un evento
-			String idStr = request.getParameter("id");
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
             
 			try {
 				EventDTO event = eventService.findById(Long.valueOf(idStr));
@@ -62,8 +62,8 @@ public class EventServlet extends HttpServlet {
 			// Action: Buscar eventos
 			
 			// 1. Lectura de parámetros de la petición
-			String idStr = request.getParameter("id");
-			String name = request.getParameter("name");
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			String name = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
             String statusIdStr = request.getParameter("statusId");
             String formatIdStr = request.getParameter("formatId");
             String userIdStr = request.getParameter("userId");
@@ -71,7 +71,7 @@ public class EventServlet extends HttpServlet {
             String endDateStr = request.getParameter("endDate");
             String countryIdStr = request.getParameter("countryId");
             String provinceIdStr = request.getParameter("provinceId");
-            String localityIdStr = request.getParameter("localityId");
+			String localityIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
             
             // 2. Creamos un objeto EventCriteria para asignar los parámetros de búsqueda
 			EventCriteria criteria = new EventCriteria();
@@ -143,7 +143,7 @@ public class EventServlet extends HttpServlet {
 			
 		}else if ("delete".equalsIgnoreCase(action)) {
 			// Action: Eliminar un evento
-			String idStr = request.getParameter("id");
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 			try {
 				eventService.delete(Long.valueOf(idStr));
 				// Tras eliminar, refrescamos la lista

@@ -6,7 +6,7 @@
 <%@ include file="/html/common/header.jsp"%>
 
 <!-- Contenedor Principal -->
-<main class="container">
+<main class="container"> 
 
 	<!-- Sección Izquierda -->
 	<section class="left-content">
@@ -82,12 +82,12 @@
 		<!-- Formulario apuntando directamente al Servlet PUBLICO de Usuario -->
 		<form class="login-form" action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>" method="POST">
 
-			<input type="hidden" name="action" value="login"> 
+			<input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="login"> 
 			<span class="field-label">ROL</span>
 
 			<div class="role-selector">
 				<label class="role-option">
-					<input type="radio" name="rolId" value="3" checked>
+					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="3" checked>
 					<span class="radio-custom"></span>
 					<div class="role-text">
 						<strong>Organizador</strong>
@@ -96,7 +96,7 @@
 				</label>
 
 				<label class="role-option">
-					<input type="radio" name="rolId" value="4">
+					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="4">
 					<span class="radio-custom"></span>
 					<div class="role-text">
 						<strong>Deportista</strong>
@@ -105,7 +105,7 @@
 				</label>
 
 				<label class="role-option">
-					<input type="radio" name="rolId" value="5">
+					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="5">
 					<span class="radio-custom"></span>
 					<div class="role-text">
 						<strong>Entrenador</strong>
@@ -114,7 +114,7 @@
 				</label>
 
 				<label class="role-option">
-					<input type="radio" name="rolId" value="2">
+					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="2">
 					<span class="radio-custom"></span>
 					<div class="role-text">
 						<strong>Árbitro</strong>
@@ -123,7 +123,7 @@
 				</label>
 
 				<label class="role-option">
-					<input type="radio" name="rolId" value="6">
+					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="6">
 					<span class="radio-custom"></span>
 					<div class="role-text">
 						<strong>Fan</strong>
@@ -137,13 +137,13 @@
 			<!-- Formulario de credenciales -->
 			<div class="input-group">
 				<label for="email" class="field-label">USUARIO / EMAIL</label> 
-				<input type="email" id="email" name="email" placeholder="tu@email.com" required autocomplete="off">
+				<input type="email" id="email" name="<%= ConstantsUtils.REQUEST_PARAM_EMAIL %>" placeholder="tu@email.com" required autocomplete="off">
 			</div>
 
 			<div class="input-group">
 				<label for="password" class="field-label">CONTRASEÑA</label>
 				<div class="password-wrapper">
-					<input type="password" id="password" name="password" placeholder="••••••••" required>
+					<input type="password" id="password" name="<%= ConstantsUtils.REQUEST_PARAM_PASSWORD %>" placeholder="••••••••" required>
 					<button type="button" class="toggle-password" aria-label="Mostrar contraseña">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

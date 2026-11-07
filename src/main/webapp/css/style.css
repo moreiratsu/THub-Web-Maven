@@ -1348,3 +1348,24 @@ input[type="date"] {
 .submit-btn-register {
   margin-top: 20px;
 }
+
+
+/* ==========================================
+   IMAGEN DE PERFIL
+   ========================================== */
+.profile-photo {
+    display: block;
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+.avatar-circle img {
+  width: 150%;
+  height: 150%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.avatar-circle.has-photo {
+  background-color: transparent;
+}

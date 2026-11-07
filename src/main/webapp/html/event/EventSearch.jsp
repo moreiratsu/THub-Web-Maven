@@ -2,13 +2,14 @@
 	pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.EventDTO"%>
 <%@ page import="com.alvaro.thub.utils.Results"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
 <!-- HEADER -->
 <%@ include file="/html/common/header.jsp"%>
 
 <!-- BARRA SUPERIOR -->
 <%@ include file="/html/common/topbar.jsp"%>
 
-<div class="dashboard-layout">
+<div class="dashboard-layout"> 
 	<!-- MENU LATERAL -->
 	<%@ include file="/html/common/asidebar.jsp"%>
 	<!-- Área de Contenido Principal -->
@@ -23,18 +24,18 @@
 		<div class="card search-card">
 			<form action="${pageContext.request.contextPath}/Event"
 				method="GET">
-				<input type="hidden" name="action" value="search">
+				<input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="search">
 
 				<!-- Filtros Específicos Grid -->
 				<div class="filter-grid">
 					<div>
 						<label class="field-label">ID EVENTO / CÓDIGO</label> <input
-							type="text" name="id" class="form-control" placeholder="Ej: 1">
+							type="text" name="<%= ConstantsUtils.REQUEST_PARAM_ID %>" class="form-control" placeholder="Ej: 1">
 					</div>
 
 					<div>
 						<label class="field-label">NOMBRE</label> <input type="text"
-							name="name" class="form-control" placeholder="Nombre del evento">
+							name="<%= ConstantsUtils.REQUEST_PARAM_NAME %>" class="form-control" placeholder="Nombre del evento">
 					</div>
 
 					<div>
@@ -90,7 +91,7 @@
 
 					<div>
 						<label class="field-label">LOCALIDAD</label> <select
-							name="localityId" class="form-control">
+							name="<%= ConstantsUtils.REQUEST_PARAM_LOCALITY_ID %>" class="form-control">
 							<option value="">Todas las localidades</option>
 						</select>
 					</div>

@@ -6,7 +6,7 @@
 <%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
 
 <%@ include file="/html/common/header.jsp"%>
-<%@ include file="/html/common/topbar.jsp"%>
+<%@ include file="/html/common/topbar.jsp"%> 
 
 <%   
     // Si no hay sesión iniciada, redirigimos al login
@@ -54,16 +54,15 @@
         <section class="search-card">
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Foto de perfil</h2>
 			<!-- AQUI mostramos la foto de perfil actual del usuario, si existe , si no mostramos un placeholder -->
-
-			<form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>" method="POST" enctype="multipart/form-data">
-				<input type="hidden" name="action" value="uploadProfilePhoto"/>
-				<input type="hidden" name="saludo" value="saludo"/>
+<img class="profile-photo" src="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=showProfilePhoto"
+     alt="Foto de perfil"><br>
+			<form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=uploadProfilePhoto" method="POST" enctype="multipart/form-data">
 
                 <div class="input-group">
                     <label for="profilePhoto" class="field-label">SELECCIONA UNA IMAGEN</label>
-                    <input type="file" id="profilePhoto" name="photo" class="form-control"
-                           accept=".jpg,.jpeg,.png" aria-describedby="profilePhotoHelp"/>
-                    <small id="profilePhotoHelp">Formatos permitidos: JPG, JPEG o PNG.</small>
+					<input type="file" id="profilePhoto" name="photo" class="form-control"
+                           accept=".png" aria-describedby="profilePhotoHelp"/>
+                    <small id="profilePhotoHelp">Formato permitido: PNG.</small>
                 </div>
 
                 <div class="form-actions">
@@ -77,15 +76,15 @@
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Datos Personales</h2>
 
             <form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>" method="POST">
-                <input type="hidden" name="action" value="updateProfile">
-                <input type="hidden" name="id" value="<%= usuario.getId() %>">
+                <input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="updateProfile">
+                <input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ID %>" value="<%= usuario.getId() %>">
 
                 <div class="filter-grid">
                     
                     <!-- DNI -->
                     <div class="input-group">
                         <label for="dni" class="field-label">DNI / NIE</label>
-                        <input type="text" id="dni" name="dni" class="form-control" 
+                        <input type="text" id="dni" name="<%= ConstantsUtils.REQUEST_PARAM_DNI %>" class="form-control" 
                                value="<%= usuario.getDni() != null ? usuario.getDni() : "" %>" 
                                placeholder="12345678X" autocomplete="off">
                     </div>
@@ -93,7 +92,7 @@
                     <!-- Nombre -->
                     <div class="input-group">
                         <label for="name" class="field-label">NOMBRE</label>
-                        <input type="text" id="name" name="name" class="form-control" 
+                        <input type="text" id="name" name="<%= ConstantsUtils.REQUEST_PARAM_NAME %>" class="form-control" 
                                value="<%= usuario.getName() != null ? usuario.getName() : "" %>" 		
                                required autocomplete="off">
                     </div>
@@ -101,7 +100,7 @@
                     <!-- Primer Apellido -->
                     <div class="input-group">
                         <label for="lastName1" class="field-label">PRIMER APELLIDO</label>
-                        <input type="text" id="lastName1" name="lastName1" class="form-control" 
+                        <input type="text" id="lastName1" name="<%= ConstantsUtils.REQUEST_PARAM_LAST_NAME_1 %>" class="form-control" 
                                value="<%= usuario.getLastName1() != null ? usuario.getLastName1() : "" %>" 
                                placeholder="Primer apellido" autocomplete="off">
                     </div>
@@ -109,7 +108,7 @@
                     <!-- Segundo Apellido -->
                     <div class="input-group">
                         <label for="lastName2" class="field-label">SEGUNDO APELLIDO</label>
-                        <input type="text" id="lastName2" name="lastName2" class="form-control" 
+                        <input type="text" id="lastName2" name="<%= ConstantsUtils.REQUEST_PARAM_LAST_NAME_2 %>" class="form-control" 
                                value="<%= usuario.getLastName2() != null ? usuario.getLastName2() : "" %>" 
                                placeholder="Segundo apellido" autocomplete="off">
                     </div>
@@ -117,7 +116,7 @@
                     <!-- Correo Electrónico -->
                     <div class="input-group">
                         <label for="email" class="field-label">CORREO ELECTRÓNICO</label>
-                        <input type="email" id="email" name="email" class="form-control" 
+                        <input type="email" id="email" name="<%= ConstantsUtils.REQUEST_PARAM_EMAIL %>" class="form-control" 
                                value="<%= usuario.getEmail() != null ? usuario.getEmail() : "" %>" 
                                required autocomplete="off">
                     </div>
@@ -125,7 +124,7 @@
                     <!-- Teléfono -->
                     <div class="input-group">
                         <label for="phoneNumber" class="field-label">TELÉFONO DE CONTACTO</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" 
+                        <input type="tel" id="phoneNumber" name="<%= ConstantsUtils.REQUEST_PARAM_PHONE %>" class="form-control" 
                                value="<%= usuario.getPhoneNumber() != null ? usuario.getPhoneNumber() : "" %>" 
                                placeholder="+34 600 000 000" autocomplete="off">
                     </div>
@@ -133,14 +132,14 @@
                     <!-- Fecha de Nacimiento -->
                     <div class="input-group">
                         <label for="bornDate" class="field-label">FECHA DE NACIMIENTO</label>
-                        <input type="date" id="bornDate" name="bornDate" class="form-control" 
+                        <input type="date" id="bornDate" name="<%= ConstantsUtils.REQUEST_PARAM_BORN_DATE %>" class="form-control" 
                                value="<%= usuario.getBornDate() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(usuario.getBornDate()) : "" %>">
                     </div>
 
                     <!-- ComboBox de Género Dinámico -->
                     <div class="input-group">
                         <label for="genderId" class="field-label">GÉNERO</label>
-                        <select id="genderId" name="genderId" class="form-control">
+                        <select id="genderId" name="<%= ConstantsUtils.REQUEST_PARAM_GENDER_ID %>" class="form-control">
                             <option value="">-- Selecciona Género --</option>
                             <% 
                                 if (generos != null && !generos.isEmpty()) {
@@ -160,7 +159,7 @@
                     <!-- ComboBox de Localidad Dinámico -->
                     <div class="input-group">
                         <label for="localityId" class="field-label">LOCALIDAD</label>
-                        <select id="localityId" name="localityId" class="form-control">
+                        <select id="localityId" name="<%= ConstantsUtils.REQUEST_PARAM_LOCALITY_ID %>" class="form-control">
                             <option value="">-- Selecciona Localidad --</option>
                             <% 
                                 if (localidades != null && !localidades.isEmpty()) {
@@ -190,24 +189,24 @@
             <h2 class="section-title" style="font-size: 1rem; margin-bottom: 16px;">Seguridad</h2>
 
             <form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>" method="POST">
-                <input type="hidden" name="action" value="updatePassword">
-                <input type="hidden" name="id" value="<%= usuario.getId() %>">
+                <input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="updatePassword">
+                <input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ID %>" value="<%= usuario.getId() %>">
 
                 <div class="filter-grid">
                     
                     <div class="input-group">
                         <label for="oldPassword" class="field-label">CONTRASEÑA ACTUAL</label>
-                        <input type="password" id="oldPassword" name="oldPassword" class="form-control" placeholder="••••••••" required>
+                        <input type="password" id="oldPassword" name="<%= ConstantsUtils.REQUEST_PARAM_OLD_PASSWORD %>" class="form-control" placeholder="••••••••" required>
                     </div>
 
                     <div class="input-group">
                         <label for="newPassword" class="field-label">NUEVA CONTRASEÑA</label>
-                        <input type="password" id="newPassword" name="newPassword" class="form-control" placeholder="••••••••" required>
+                        <input type="password" id="newPassword" name="<%= ConstantsUtils.REQUEST_PARAM_NEW_PASSWORD %>" class="form-control" placeholder="••••••••" required>
                     </div>
 
                     <div class="input-group">
                         <label for="confirmNewPassword" class="field-label">CONFIRMAR NUEVA CONTRASEÑA</label>
-                        <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="form-control" placeholder="••••••••" required>
+                        <input type="password" id="confirmNewPassword" name="<%= ConstantsUtils.REQUEST_PARAM_CONFIRM_NEW_PASSWORD %>" class="form-control" placeholder="••••••••" required>
                     </div>
 
                 </div>

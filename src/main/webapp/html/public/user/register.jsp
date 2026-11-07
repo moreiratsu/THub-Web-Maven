@@ -7,7 +7,7 @@
 
 <!-- Contenedor Principal -->
 <main class="container">
-
+ 
 	<!-- Sección Izquierda (Informativa / Hero) -->
 	<section class="left-content">
 		<div class="badge">ÚNETE A LA PLATAFORMA</div>
@@ -70,14 +70,14 @@
 		<form class="login-form"
 			action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>" method="POST">
 
-			<input type="hidden" name="action" value="register">
+			<input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="register">
 
 			<!-- Selector de Rol -->
 <span class="field-label">SELECCIONA TU ROL</span>
 
 <div class="role-selector">
   <label class="role-option">
-    <input type="radio" name="rolId" value="3" checked>
+    <input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="3" checked>
     <span class="radio-custom"></span>
     <div class="role-text">
       <strong>Organizador</strong>
@@ -86,7 +86,7 @@
   </label>
 
   <label class="role-option">
-    <input type="radio" name="rolId" value="4">
+    <input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="4">
     <span class="radio-custom"></span>
     <div class="role-text">
       <strong>Deportista / Participante</strong>
@@ -95,7 +95,7 @@
   </label>
 
   <label class="role-option">
-    <input type="radio" name="rolId" value="5">
+    <input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="5">
     <span class="radio-custom"></span>
     <div class="role-text">
       <strong>Entrenador</strong>
@@ -109,14 +109,14 @@
 			<!-- Campo Nombre -->
 			<div class="input-group">
 				<label for="name" class="field-label">NOMBRE</label> <input
-					type="text" id="name" name="name"
+					type="text" id="name" name="<%= ConstantsUtils.REQUEST_PARAM_NAME %>"
 					placeholder="Ej: Cual es tu nombre?" required autocomplete="off">
 			</div>
 
 			<!-- Campo Email -->
 			<div class="input-group">
 				<label for="email" class="field-label">CORREO ELECTRÓNICO</label> <input
-					type="email" id="email" name="email" placeholder="tu@email.com"
+					 type="email" id="email" name="<%= ConstantsUtils.REQUEST_PARAM_EMAIL %>" placeholder="tu@email.com"
 					required autocomplete="off">
 			</div>
 
@@ -124,7 +124,7 @@
 			<div class="input-group">
 				<label for="password" class="field-label">CONTRASEÑA</label>
 				<div class="password-wrapper">
-					<input type="password" id="password" name="password"
+					<input type="password" id="password" name="<%= ConstantsUtils.REQUEST_PARAM_PASSWORD %>"
 						placeholder="••••••••" required>
 					<button type="button" class="toggle-password"
 						aria-label="Mostrar contraseña">
@@ -142,7 +142,7 @@
 				<label for="confirmPassword" class="field-label">CONFIRMAR
 					CONTRASEÑA</label>
 				<div class="password-wrapper">
-					<input type="password" id="confirmPassword" name="confirmPassword"
+					<input type="password" id="confirmPassword" name="<%= ConstantsUtils.REQUEST_PARAM_CONFIRM_PASSWORD %>"
 						placeholder="••••••••" required>
 				</div>
 			</div>

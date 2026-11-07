@@ -63,6 +63,8 @@ public final class ConstantsUtils {
 	/*------------------------------------------------------------------------------
 	 * CONSTANTES DE LOS PARAMETROS ED LA REQUEST DE LOS SERVLETS 
 	 -----------------------------------------------------------------------------*/
+	/** Nombre del parámetro que identifica la acción solicitada al servlet. */
+	public static final String REQUEST_PARAM_ACTION = "action";
 	// parametros de usuario
 	public static final String REQUEST_PARAM_EMAIL = "email";
 	public static final String REQUEST_PARAM_PASSWORD = "password";
