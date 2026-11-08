@@ -19,11 +19,13 @@ public final class ConstantsUtils {
 
 	/** Tipo de entidad usado por el CMS para identificar contenido asociado a un usuario. */
 	public static final String USER_ENTITY_TYPE = "usuario";
-
+	/** Tipo de entidad usado por el CMS para identificar contenido asociado a un evento. */
+	public static final String EVENT_ENTITY_TYPE = "evento";
 	/** Tipo de recurso del CMS para la foto de perfil del usuario. */
 	public static final String USER_PROFILE_RESOURCE_TYPE = "perfil";
+	public static final String EVENT_LINEUP_RESOURCE_TYPE = "cartel";
 
-	public static final String EVENT = "evento";
+	public static final String EVENT = "event";
 		
 	
 	
@@ -39,6 +41,7 @@ public final class ConstantsUtils {
 	
 	public static final String EVENT_SEARCH = "/html/public/event/EventSearch.jsp";
 	public static final String EVENT_DETAIL = "/html/public/event/EventDetail.jsp";
+	public static final String EVENT_NEW = "/html/private/event/NewEvent.jsp";
 
 	
 	/*------------------------------------------------------------------------------
@@ -85,12 +88,13 @@ public final class ConstantsUtils {
      ---------------------------------------------------------------------------------*/
 	public static final String REQUEST_PARAM_ACTION = "action";
     // acciones de eventos
-	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
 	public static final String REQUEST_EVENT_ACTION_SEARCH = "search";
 	public static final String REQUEST_EVENT_ACTION_DETAIL = "detail";
 	public static final String REQUEST_EVENT_ACTION_DELETE = "delete";
 	public static final String REQUEST_EVENT_ACTION_CREATE = "create";
 	public static final String REQUEST_EVENT_ACTION_UPDATE = "update";
-
+	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
+	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
+	public static final String REQUEST_EVENT_ACTION_SHOW_CREATE = "showCreate";
 
 }

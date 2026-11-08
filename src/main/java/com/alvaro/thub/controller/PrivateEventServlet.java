@@ -21,7 +21,11 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 
+import com.alvaro.thub.model.LocalityDTO;
+import com.alvaro.thub.service.LocalityService;
+import com.alvaro.thub.service.impl.LocalityServiceImpl;
 /*
  * Servlet que maneja las peticiones privadas relacionadas con eventos.
  * - editar eventos propios del usuario
@@ -34,19 +38,38 @@ public class PrivateEventServlet extends HttpServlet {
 	
 	private static Logger logger = LogManager.getLogger(PrivateEventServlet.class);
 	private EventService eventService = null;
+	private LocalityService localityService = null;
 	
 	public PrivateEventServlet() {
 		super();
 		this.eventService = new EventServiceImpl();
+		this.localityService = new LocalityServiceImpl();
 	}
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
+		
+		// accion = mostrar vista de creacion de evento
+		if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE.equalsIgnoreCase(action)) {
+		    try {
+		        List<LocalityDTO> localidades =
+		                localityService.findByProvinceId(null);
 
+		        request.setAttribute("localidades", localidades);
+
+		    } catch (ServiceException se) {
+		        logger.error("Error al cargar las localidades para crear un evento", se);
+		        request.setAttribute("error", "No se pudieron cargar las localidades.");
+		    }
+
+		    request.getRequestDispatcher(ConstantsUtils.EVENT_NEW)
+		           .forward(request, response);
+		    return;
+		}
 		// Accion = borrar
-		if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
+		else if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
 			// Action: Eliminar un evento
 			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 			try {

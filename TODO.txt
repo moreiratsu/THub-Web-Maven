@@ -12,3 +12,17 @@ LISTA DE COSAS PENDIENTES:
  TENGO QUE HACER QUE EN EL BUSCADOR DE EVENTOS, BUSCAR A UN USUARIO SE APOR TEXTO , NO POR LISTA FIND ALL O ALGO ASI
  
  poner las acciones de los servlet de usuario en constantutils y corregir sus llamadas desde los jsp
+ 
+ tengo que quitar el campo id de busqueda de eventos ya que no es un campo para usuarios habituales si no que solo seria para un administrador de lsistema
+ 
+ logicamente tengo que controlar en los ESTADOS de los eventos las fechas ya que si un evento llega a su fecha de fin, tiene que pasar automaticamente de en curso a finalizado.
+ 
+ Dentro de la vista detalle de eventos en el futuro tengo que poner los resultados, los equipos y participantes que tiene ese evento, y mas datos y detalles.
+ 
+pdf con apuntes:
+ -quiero que me diga que diferencia hay entre get y post
+ -que me haga un diagrama de flujo entre las distintas capas, quien esta en cada una y de que se encargan
+ -la diferencia entre forward y redirect
+ -como funcionan los filtros (web.xml y autentication filter)
+ -que significa maven y porque es importante
+ -

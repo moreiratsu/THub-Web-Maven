@@ -1255,10 +1255,31 @@ body, .topbar, .sidebar, .card, .stat-card, .footer {
 .status-badge {
   font-weight: 600;
 }
+/* Etiquetas de estado en la lista de eventos */
+.status-badge {
+  font-weight: 600;
+}
 
 .status-programmed {
+  color: rgb(128, 128, 255); /* Azul: programado */
+}
+
+.status-in-progress {
   color: #4ade80; /* Verde suave */
 }
+
+.status-cancelled {
+  color: #ef4444; /* Rojo: cancelado */
+}
+
+.status-finished {
+  color: rgb(128, 128, 128); /* Gris: finalizado */
+}
+
+.status-default {
+  color: #eab308; /* Amarillo: cualquier otro estado */
+}
+
 
 /* Acciones en Tabla */
 .text-center {
@@ -1374,4 +1395,91 @@ input[type="date"] {
 }
 .avatar-circle.has-photo {
   background-color: transparent;
+}
+
+
+/* Vista de detalle del evento */
+.event-detail-card {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 28px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.event-detail-title {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 1.7rem;
+}
+
+.event-detail-card p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.event-detail-card p strong {
+  min-width: 145px;
+  color: var(--text-primary);
+}
+
+.event-detail-card .status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--card-border);
+}
+
+.event-detail-card .btn-primary {
+  display: inline-flex;
+  margin-top: 20px;
+  text-decoration: none;
+}
+
+.event-detail-card p strong {
+  min-width: 145px;
+  color: var(--accent-burgundy);
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+
+
+.event-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.event-detail-info,
+.event-poster-panel {
+  min-width: 0;
+}
+
+.event-poster {
+  display: block;
+  width: 100%;
+  height: 420px;
+  object-fit: contain;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+}
+
+@media (max-width: 800px) {
+  .event-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-poster {
+    height: 320px;
+  }
 }

@@ -30,14 +30,11 @@
 
 		List<LocalityDTO> localidades = (List<LocalityDTO>) request.getAttribute("localidades");
 
-		String paisSeleccionado =
-		        request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+		String paisSeleccionado = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
 
-		String provinciaSeleccionada =
-		        request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+		String provinciaSeleccionada = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 
-		String localidadSeleccionada =
-		        request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+		String localidadSeleccionada = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
 
 		List<Status> estados = (List<Status>) request.getAttribute("estados");
 
@@ -57,7 +54,8 @@
 				action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>"
 				method="GET"
 				data-show-search-action="<%=ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH%>">
-				<input type="hidden" id="eventSearchAction" name="<%=ConstantsUtils.REQUEST_PARAM_ACTION%>"
+				<input type="hidden" id="eventSearchAction"
+					name="<%=ConstantsUtils.REQUEST_PARAM_ACTION%>"
 					value="<%=ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH%>">
 
 				<!-- Filtros Específicos Grid -->
@@ -153,7 +151,8 @@
 							if (paises != null) {
 								for (Country pais : paises) {
 							%>
-							<option value="<%=pais.getId()%>" <%=String.valueOf(pais.getId()).equals(paisSeleccionado) ? "selected" : ""%>>
+							<option value="<%=pais.getId()%>"
+								<%=String.valueOf(pais.getId()).equals(paisSeleccionado) ? "selected" : ""%>>
 								<%=pais.getName()%>
 							</option>
 							<%
@@ -164,7 +163,8 @@
 					</div>
 
 					<div>
-						<label class="field-label">PROVINCIA</label> <select id="eventProvince"
+						<label class="field-label">PROVINCIA</label> <select
+							id="eventProvince"
 							name="<%=ConstantsUtils.REQUEST_PARAM_PROVINCE_ID%>"
 							class="form-control">
 							<option value="">Todas las provincias</option>
@@ -172,7 +172,8 @@
 							if (provincias != null) {
 								for (ProvinceDTO provincia : provincias) {
 							%>
-							<option value="<%=provincia.getId()%>" <%=String.valueOf(provincia.getId()).equals(provinciaSeleccionada) ? "selected" : ""%>>
+							<option value="<%=provincia.getId()%>"
+								<%=String.valueOf(provincia.getId()).equals(provinciaSeleccionada) ? "selected" : ""%>>
 								<%=provincia.getName()%>
 							</option>
 							<%
@@ -183,7 +184,8 @@
 					</div>
 
 					<div>
-						<label class="field-label">LOCALIDAD</label> <select id="eventLocality"
+						<label class="field-label">LOCALIDAD</label> <select
+							id="eventLocality"
 							name="<%=ConstantsUtils.REQUEST_PARAM_LOCALITY_ID%>"
 							class="form-control">
 							<option value="">Todas las localidades</option>
@@ -192,7 +194,8 @@
 							if (localidades != null) {
 								for (LocalityDTO localidad : localidades) {
 							%>
-							<option value="<%=localidad.getId()%>" <%=String.valueOf(localidad.getId()).equals(localidadSeleccionada) ? "selected" : ""%>>
+							<option value="<%=localidad.getId()%>"
+								<%=String.valueOf(localidad.getId()).equals(localidadSeleccionada) ? "selected" : ""%>>
 								<%=localidad.getName()%>
 							</option>
 							<%
@@ -251,8 +254,27 @@
 							<td class="event-name"><%=e.getName() != null ? e.getName() : ""%></td>
 
 							<!-- Estado con Badge de color -->
-							<td><span class="status-badge status-programmed"> <%=e.getStatusName() != null ? e.getStatusName() : "Programado"%>
-							</span></td>
+
+							<td>
+								<%
+								String nombreEstado = e.getStatusName() == null ? "" : e.getStatusName().trim().toLowerCase();
+
+								String claseEstado;
+
+								if (nombreEstado.equals("programado")) {
+									claseEstado = "status-programmed";
+								} else if (nombreEstado.equals("en curso")) {
+									claseEstado = "status-in-progress";
+								} else if (nombreEstado.equals("cancelado")) {
+									claseEstado = "status-cancelled";
+								} else if (nombreEstado.equals("finalizado")) {
+									claseEstado = "status-finished";
+								} else {
+									claseEstado = "status-default";
+								}
+								%> <span class="status-badge <%=claseEstado%>"> <%=e.getStatusName() != null ? e.getStatusName() : "Programado"%>
+							</span>
+							</td>
 
 							<!-- Formato -->
 							<td><%=e.getFormatName() != null ? e.getFormatName() : "-"%></td>

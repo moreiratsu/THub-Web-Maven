@@ -86,7 +86,7 @@
 				<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>" class="submenu-item">
 					<span class="submenu-dot">•</span> Buscar Evento
 				</a> 
-				<a href="${pageContext.request.contextPath}/Event?action=showNewEvent">
+				<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE %>">
 					<span class="submenu-dot">•</span> Nuevo Evento
 				</a>
 			</div>

@@ -35,7 +35,7 @@
     
       <!-- Botón de Organizar Evento -->
       <button class="btn-primary">
-      <a href="${pageContext.request.contextPath}/Event?action=showNewEvent">
+      <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE %>">
         <span>+</span> Organiza un evento
         </a>
       </button>

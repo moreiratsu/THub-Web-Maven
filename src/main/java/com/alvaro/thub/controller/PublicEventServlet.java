@@ -10,6 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.alvaro.thub.dao.criteria.EventCriteria;
+import com.alvaro.thub.model.ContentData;
+import com.alvaro.thub.model.ContentMetadata;
 import com.alvaro.thub.model.Country;
 import com.alvaro.thub.model.EventDTO;
 import com.alvaro.thub.model.Format;
@@ -18,6 +20,7 @@ import com.alvaro.thub.model.ProvinceDTO;
 import com.alvaro.thub.model.Status;
 import com.alvaro.thub.model.UserDTO;
 import com.alvaro.thub.dao.criteria.UserCriteria;
+import com.alvaro.thub.service.ContentService;
 import com.alvaro.thub.service.CountryService;
 import com.alvaro.thub.service.EventService;
 import com.alvaro.thub.service.FormatService;
@@ -26,6 +29,7 @@ import com.alvaro.thub.service.ProvinceService;
 import com.alvaro.thub.service.ServiceException;
 import com.alvaro.thub.service.StatusService;
 import com.alvaro.thub.service.UserService;
+import com.alvaro.thub.service.impl.ContentServiceFileImpl;
 import com.alvaro.thub.service.impl.CountryServiceImpl;
 import com.alvaro.thub.service.impl.EventServiceImpl;
 import com.alvaro.thub.service.impl.FormatServiceImpl;
@@ -49,7 +53,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/Public/Event")
 public class PublicEventServlet extends HttpServlet {
-	
+
 	private static Logger logger = LogManager.getLogger(PublicEventServlet.class);
 	private UserService userService = null;
 	private EventService eventService = null;
@@ -58,7 +62,8 @@ public class PublicEventServlet extends HttpServlet {
 	private LocalityService localityService = null;
 	private ProvinceService provinceService = null;
 	private CountryService countryService = null;
-	
+	private ContentService contentService = null;
+
 	public PublicEventServlet() {
 		super();
 		this.userService = new UserServiceImpl();
@@ -68,76 +73,72 @@ public class PublicEventServlet extends HttpServlet {
 		this.localityService = new LocalityServiceImpl();
 		this.provinceService = new ProvinceServiceImpl();
 		this.countryService = new CountryServiceImpl();
+		this.contentService = new ContentServiceFileImpl();
 	}
-	
+
 	/**
-	 * Carga las listas de localidades y combobox desde la base de datos en el objeto request.
+	 * Carga las listas de localidades y combobox desde la base de datos en el
+	 * objeto request.
 	 */
 	private void cargarDesplegables(HttpServletRequest request) {
-	    try {
-	        List<Status> statusList = statusService.findAll();
-	        List<Format> formatList = formatService.findAll();
-	        List<Country> paises = countryService.findAll();
+		try {
+			List<Status> statusList = statusService.findAll();
+			List<Format> formatList = formatService.findAll();
+			List<Country> paises = countryService.findAll();
 
-	        String countryIdStr =
-	                request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+			String countryIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
 
-	        Long countryId = null;
-	        if (countryIdStr != null && !countryIdStr.trim().isEmpty()) {
-	            countryId = Long.valueOf(countryIdStr.trim());
-	        }
+			Long countryId = null;
+			if (countryIdStr != null && !countryIdStr.trim().isEmpty()) {
+				countryId = Long.valueOf(countryIdStr.trim());
+			}
 
-	        String provinceIdStr =
-	                request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+			String provinceIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 
-	        Long provinceId = null;
-	        if (provinceIdStr != null && !provinceIdStr.trim().isEmpty()) {
-	            provinceId = Long.valueOf(provinceIdStr.trim());
-	        }
+			Long provinceId = null;
+			if (provinceIdStr != null && !provinceIdStr.trim().isEmpty()) {
+				provinceId = Long.valueOf(provinceIdStr.trim());
+			}
 
-	        List<ProvinceDTO> provincias =
-	                provinceService.findByCountry(countryId);
+			List<ProvinceDTO> provincias = provinceService.findByCountry(countryId);
 
-	        List<LocalityDTO> localidades =
-	                localityService.findByProvinceId(provinceId);
-	        Results<UserDTO> resultadoUsuarios =
-	                userService.findBy(new UserCriteria(), 1, Integer.MAX_VALUE);
+			List<LocalityDTO> localidades = localityService.findByProvinceId(provinceId);
+			Results<UserDTO> resultadoUsuarios = userService.findBy(new UserCriteria(), 1, Integer.MAX_VALUE);
 
-	        List<UserDTO> organizadores =
-	                resultadoUsuarios != null && resultadoUsuarios.getPage() != null
-	                        ? resultadoUsuarios.getPage()
-	                        : List.of();
-	        
-	        request.setAttribute("estados", statusList);
-	        request.setAttribute("formatos", formatList);
-	        request.setAttribute("paises", paises);
-	        request.setAttribute("provincias", provincias);
-	        request.setAttribute("localidades", localidades);
-	        request.setAttribute("organizadores", organizadores);
+			List<UserDTO> organizadores = resultadoUsuarios != null && resultadoUsuarios.getPage() != null
+					? resultadoUsuarios.getPage()
+					: List.of();
 
-	    } catch (ServiceException se) {
-	        logger.error("Error al cargar los desplegables", se);
-	    }
+			request.setAttribute("estados", statusList);
+			request.setAttribute("formatos", formatList);
+			request.setAttribute("paises", paises);
+			request.setAttribute("provincias", provincias);
+			request.setAttribute("localidades", localidades);
+			request.setAttribute("organizadores", organizadores);
+
+		} catch (ServiceException se) {
+			logger.error("Error al cargar los desplegables", se);
+		}
 	}
-	
-	// Por hacerlo de otra manera, en este Servlet voy a gestionar las acciones de la ç
+
+	// Por hacerlo de otra manera, en este Servlet voy a gestionar las acciones de
+	// la ç
 	// request a traves de un switch..
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		
+
 		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		if (action == null || action.trim().isEmpty()) {
-		    action = ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH; // O redirigir a una página principal
+			action = ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH; // O redirigir a una página principal
 		}
 		switch (action) {
-		
+
 		// Accion = mostrar la vista de busqueda y cargar los combobox
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH:
-		    cargarDesplegables(request);
-		    request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
-		    break;
-		    
-		    
+			cargarDesplegables(request);
+			request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
+			break;
+
 		// Accion = "search"
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH:
 			cargarDesplegables(request);
@@ -150,21 +151,39 @@ public class PublicEventServlet extends HttpServlet {
 			String startDateStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
 			String endDateStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
 			String countryIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
-		    String provinceIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+			String provinceIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 			String localityIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
-			
+
 			// 2. Creamos un criteria y le asignamos los parámetros de búsqueda
 			EventCriteria criteria = new EventCriteria();
-			// los criterios los trimeamos para evitar espacios en blanco al inicio y al final
-			if (idStr != null && !idStr.trim().isEmpty()) { criteria.setId(Long.valueOf(idStr.trim()));}
-			if (name != null && !name.trim().isEmpty()) {criteria.setName(name.trim());}
-			if (statusIdStr != null && !statusIdStr.trim().isEmpty()) {criteria.setStatusId(Long.valueOf(statusIdStr.trim()));}
-			if (formatIdStr != null && !formatIdStr.trim().isEmpty()) {criteria.setFormatId(Long.valueOf(formatIdStr.trim()));}
-			if (userIdStr != null && !userIdStr.trim().isEmpty()) {criteria.setCreatorUserId(Long.valueOf(userIdStr.trim()));}
-			if (countryIdStr != null && !countryIdStr.trim().isEmpty()) {criteria.setCountryId(Long.valueOf(countryIdStr.trim()));}
-			if (provinceIdStr != null && !provinceIdStr.trim().isEmpty()) {criteria.setProvinceId(Long.valueOf(provinceIdStr.trim()));}
-			if (localityIdStr != null && !localityIdStr.trim().isEmpty()) {criteria.setLocalityId(Long.valueOf(localityIdStr.trim()));}
-			// Formateador para convertir el String del input HTML (yyyy-MM-dd) a java.util.Date
+			// los criterios los trimeamos para evitar espacios en blanco al inicio y al
+			// final
+			if (idStr != null && !idStr.trim().isEmpty()) {
+				criteria.setId(Long.valueOf(idStr.trim()));
+			}
+			if (name != null && !name.trim().isEmpty()) {
+				criteria.setName(name.trim());
+			}
+			if (statusIdStr != null && !statusIdStr.trim().isEmpty()) {
+				criteria.setStatusId(Long.valueOf(statusIdStr.trim()));
+			}
+			if (formatIdStr != null && !formatIdStr.trim().isEmpty()) {
+				criteria.setFormatId(Long.valueOf(formatIdStr.trim()));
+			}
+			if (userIdStr != null && !userIdStr.trim().isEmpty()) {
+				criteria.setCreatorUserId(Long.valueOf(userIdStr.trim()));
+			}
+			if (countryIdStr != null && !countryIdStr.trim().isEmpty()) {
+				criteria.setCountryId(Long.valueOf(countryIdStr.trim()));
+			}
+			if (provinceIdStr != null && !provinceIdStr.trim().isEmpty()) {
+				criteria.setProvinceId(Long.valueOf(provinceIdStr.trim()));
+			}
+			if (localityIdStr != null && !localityIdStr.trim().isEmpty()) {
+				criteria.setLocalityId(Long.valueOf(localityIdStr.trim()));
+			}
+			// Formateador para convertir el String del input HTML (yyyy-MM-dd) a
+			// java.util.Date
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			if (startDateStr != null && !startDateStr.trim().isEmpty()) {
 				try {
@@ -183,61 +202,81 @@ public class PublicEventServlet extends HttpServlet {
 				}
 			}
 			// 3. Llamamos al servicio para buscar los eventos que cumplan con los criterios
-			// 4. Guardamos los resultados en una lista se los asignamos a la request 
+			// 4. Guardamos los resultados en una lista se los asignamos a la request
 			// y los pasamos al JSP de resultados de búsqueda
 			try {
-			    Results<EventDTO> results =
-			            eventService.findBy(criteria, 1, Integer.MAX_VALUE);
+				Results<EventDTO> results = eventService.findBy(criteria, 1, Integer.MAX_VALUE);
 
-			    request.setAttribute("results", results);
+				request.setAttribute("results", results);
 
 			} catch (ServiceException se) {
-			    logger.error("Error al buscar eventos: ", se);
-			    request.setAttribute("error", "Error al realizar la búsqueda de eventos.");
+				logger.error("Error al buscar eventos: ", se);
+				request.setAttribute("error", "Error al realizar la búsqueda de eventos.");
 			}
 
-			request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH)
-			        .forward(request, response);
+			request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
 			break;
-			
-			
+
 		// Accion = "detail"
 		case ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL:
-		    String idStr2 = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 
-		    try {
-		        if (idStr2 == null || idStr2.trim().isEmpty()) {
-		            throw new IllegalArgumentException("El ID del evento no puede estar vacío.");
-		        }
-		        
-		        EventDTO event = eventService.findById(Long.valueOf(idStr2.trim()));
-		        if (event == null) {
-		            response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento solicitado no existe.");
-		            return;
-		        }
-		        
-		        request.setAttribute("event", event);
-		        request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
+			// primero recibimos el id de la request (cuando el usuario por ejemplo le da al
+			// boton de ver el evento con id 1, se manda el id aqui y la accion de ver d
+			// etalle)
+			String idStr2 = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 
-		    } catch (Exception e) {
-		        logger.error("Error al mostrar el detalle del evento con ID: " + idStr2, e);
-		        response.sendError(HttpServletResponse.SC_NOT_FOUND, "No se pudo cargar el detalle del evento.");
+			// si el id viene a nulo o esta vacio error
+			try {
+				if (idStr2 == null || idStr2.trim().isEmpty()) {
+					throw new IllegalArgumentException("El ID del evento no puede estar vacío.");
+				}
+
+				// ahora el servlet lee esa acción y el ID, buscar el evento con el servicio y
+				// guardar el resultado en un atributo de la request.
+				EventDTO event = eventService.findById(Long.valueOf(idStr2.trim()));
+				if (event == null) {
+					response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento solicitado no existe.");
+					return;
+				}				
+					
+				request.setAttribute(ConstantsUtils.EVENT, event);
+				request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
+
+			} catch (ServiceException se) {
+				logger.error("Error al mostrar el detalle del evento con ID: " + idStr2, se);
+				response.sendError(HttpServletResponse.SC_NOT_FOUND, "No se pudo cargar el detalle del evento.");
+			}
+			break;
+
+		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP:
+			// aqui cargamos la foto del cartel del evento
+			String idEvento = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			try {
+		        ContentMetadata cm = new ContentMetadata();
+		        cm.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
+		        cm.setEntityId(idEvento);
+		        cm.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE); 
+		        cm.setFormat(".png");
+		        
+		        ContentData cartel = contentService.get(cm);
+		        if (cartel != null && cartel.getRaw() != null) {
+		            response.setContentType("image/png");
+		            response.getOutputStream().write(cartel.getRaw());
+		        } else {
+		            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+		        }
+		    } catch (ServiceException se) {
+		        logger.error("Error al obtener la foto del cartel para el evento ID: " + idEvento, se);
+		        response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		    }
-		    break;
+		    return;
+			
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		doGet(request, response);
 	}
-	
-}
 
+}
