@@ -1,0 +1,243 @@
+package com.alvaro.thub.controller;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.alvaro.thub.dao.criteria.EventCriteria;
+import com.alvaro.thub.model.Country;
+import com.alvaro.thub.model.EventDTO;
+import com.alvaro.thub.model.Format;
+import com.alvaro.thub.model.LocalityDTO;
+import com.alvaro.thub.model.ProvinceDTO;
+import com.alvaro.thub.model.Status;
+import com.alvaro.thub.model.UserDTO;
+import com.alvaro.thub.dao.criteria.UserCriteria;
+import com.alvaro.thub.service.CountryService;
+import com.alvaro.thub.service.EventService;
+import com.alvaro.thub.service.FormatService;
+import com.alvaro.thub.service.LocalityService;
+import com.alvaro.thub.service.ProvinceService;
+import com.alvaro.thub.service.ServiceException;
+import com.alvaro.thub.service.StatusService;
+import com.alvaro.thub.service.UserService;
+import com.alvaro.thub.service.impl.CountryServiceImpl;
+import com.alvaro.thub.service.impl.EventServiceImpl;
+import com.alvaro.thub.service.impl.FormatServiceImpl;
+import com.alvaro.thub.service.impl.LocalityServiceImpl;
+import com.alvaro.thub.service.impl.ProvinceServiceImpl;
+import com.alvaro.thub.service.impl.StatusServiceImpl;
+import com.alvaro.thub.service.impl.UserServiceImpl;
+import com.alvaro.thub.utils.ConstantsUtils;
+import com.alvaro.thub.utils.Results;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/*
+ * Servlet que maneja las peticiones públicas relacionadas con eventos.
+ * - buscar eventos
+ * - ver detalle de eventos
+ */
+
+@WebServlet("/Public/Event")
+public class PublicEventServlet extends HttpServlet {
+	
+	private static Logger logger = LogManager.getLogger(PublicEventServlet.class);
+	private UserService userService = null;
+	private EventService eventService = null;
+	private StatusService statusService = null;
+	private FormatService formatService = null;
+	private LocalityService localityService = null;
+	private ProvinceService provinceService = null;
+	private CountryService countryService = null;
+	
+	public PublicEventServlet() {
+		super();
+		this.userService = new UserServiceImpl();
+		this.eventService = new EventServiceImpl();
+		this.statusService = new StatusServiceImpl();
+		this.formatService = new FormatServiceImpl();
+		this.localityService = new LocalityServiceImpl();
+		this.provinceService = new ProvinceServiceImpl();
+		this.countryService = new CountryServiceImpl();
+	}
+	
+	/**
+	 * Carga las listas de localidades y combobox desde la base de datos en el objeto request.
+	 */
+	private void cargarDesplegables(HttpServletRequest request) {
+	    try {
+	        List<Status> statusList = statusService.findAll();
+	        List<Format> formatList = formatService.findAll();
+	        List<Country> paises = countryService.findAll();
+
+	        String countryIdStr =
+	                request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+
+	        Long countryId = null;
+	        if (countryIdStr != null && !countryIdStr.trim().isEmpty()) {
+	            countryId = Long.valueOf(countryIdStr.trim());
+	        }
+
+	        String provinceIdStr =
+	                request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+
+	        Long provinceId = null;
+	        if (provinceIdStr != null && !provinceIdStr.trim().isEmpty()) {
+	            provinceId = Long.valueOf(provinceIdStr.trim());
+	        }
+
+	        List<ProvinceDTO> provincias =
+	                provinceService.findByCountry(countryId);
+
+	        List<LocalityDTO> localidades =
+	                localityService.findByProvinceId(provinceId);
+	        Results<UserDTO> resultadoUsuarios =
+	                userService.findBy(new UserCriteria(), 1, Integer.MAX_VALUE);
+
+	        List<UserDTO> organizadores =
+	                resultadoUsuarios != null && resultadoUsuarios.getPage() != null
+	                        ? resultadoUsuarios.getPage()
+	                        : List.of();
+	        
+	        request.setAttribute("estados", statusList);
+	        request.setAttribute("formatos", formatList);
+	        request.setAttribute("paises", paises);
+	        request.setAttribute("provincias", provincias);
+	        request.setAttribute("localidades", localidades);
+	        request.setAttribute("organizadores", organizadores);
+
+	    } catch (ServiceException se) {
+	        logger.error("Error al cargar los desplegables", se);
+	    }
+	}
+	
+	// Por hacerlo de otra manera, en este Servlet voy a gestionar las acciones de la ç
+	// request a traves de un switch..
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		
+		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
+		if (action == null || action.trim().isEmpty()) {
+		    action = ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH; // O redirigir a una página principal
+		}
+		switch (action) {
+		
+		// Accion = mostrar la vista de busqueda y cargar los combobox
+		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH:
+		    cargarDesplegables(request);
+		    request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
+		    break;
+		    
+		    
+		// Accion = "search"
+		case ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH:
+			cargarDesplegables(request);
+			// 1. Lectura de parámetros de la petición
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			String name = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
+			String statusIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_STATUS_ID);
+			String formatIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
+			String userIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_USER_ID);
+			String startDateStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
+			String endDateStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
+			String countryIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+		    String provinceIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+			String localityIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+			
+			// 2. Creamos un criteria y le asignamos los parámetros de búsqueda
+			EventCriteria criteria = new EventCriteria();
+			// los criterios los trimeamos para evitar espacios en blanco al inicio y al final
+			if (idStr != null && !idStr.trim().isEmpty()) { criteria.setId(Long.valueOf(idStr.trim()));}
+			if (name != null && !name.trim().isEmpty()) {criteria.setName(name.trim());}
+			if (statusIdStr != null && !statusIdStr.trim().isEmpty()) {criteria.setStatusId(Long.valueOf(statusIdStr.trim()));}
+			if (formatIdStr != null && !formatIdStr.trim().isEmpty()) {criteria.setFormatId(Long.valueOf(formatIdStr.trim()));}
+			if (userIdStr != null && !userIdStr.trim().isEmpty()) {criteria.setCreatorUserId(Long.valueOf(userIdStr.trim()));}
+			if (countryIdStr != null && !countryIdStr.trim().isEmpty()) {criteria.setCountryId(Long.valueOf(countryIdStr.trim()));}
+			if (provinceIdStr != null && !provinceIdStr.trim().isEmpty()) {criteria.setProvinceId(Long.valueOf(provinceIdStr.trim()));}
+			if (localityIdStr != null && !localityIdStr.trim().isEmpty()) {criteria.setLocalityId(Long.valueOf(localityIdStr.trim()));}
+			// Formateador para convertir el String del input HTML (yyyy-MM-dd) a java.util.Date
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			if (startDateStr != null && !startDateStr.trim().isEmpty()) {
+				try {
+					Date startDate = sdf.parse(startDateStr.trim());
+					criteria.setStartDate(startDate); // Ahora se pasa un objeto Date
+				} catch (ParseException e) {
+					logger.error("Error al parsear la fecha...", e);
+				}
+			}
+			if (endDateStr != null && !endDateStr.trim().isEmpty()) {
+				try {
+					Date endDate = sdf.parse(endDateStr.trim());
+					criteria.setEndDate(endDate); // Ahora se pasa un objeto Date
+				} catch (ParseException e) {
+					logger.error("Error al parsear la fecha...", e);
+				}
+			}
+			// 3. Llamamos al servicio para buscar los eventos que cumplan con los criterios
+			// 4. Guardamos los resultados en una lista se los asignamos a la request 
+			// y los pasamos al JSP de resultados de búsqueda
+			try {
+			    Results<EventDTO> results =
+			            eventService.findBy(criteria, 1, Integer.MAX_VALUE);
+
+			    request.setAttribute("results", results);
+
+			} catch (ServiceException se) {
+			    logger.error("Error al buscar eventos: ", se);
+			    request.setAttribute("error", "Error al realizar la búsqueda de eventos.");
+			}
+
+			request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH)
+			        .forward(request, response);
+			break;
+			
+			
+		// Accion = "detail"
+		case ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL:
+		    String idStr2 = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+
+		    try {
+		        if (idStr2 == null || idStr2.trim().isEmpty()) {
+		            throw new IllegalArgumentException("El ID del evento no puede estar vacío.");
+		        }
+		        
+		        EventDTO event = eventService.findById(Long.valueOf(idStr2.trim()));
+		        if (event == null) {
+		            response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento solicitado no existe.");
+		            return;
+		        }
+		        
+		        request.setAttribute("event", event);
+		        request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
+
+		    } catch (Exception e) {
+		        logger.error("Error al mostrar el detalle del evento con ID: " + idStr2, e);
+		        response.sendError(HttpServletResponse.SC_NOT_FOUND, "No se pudo cargar el detalle del evento.");
+		    }
+		    break;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		doGet(request, response);
+	}
+	
+}
+

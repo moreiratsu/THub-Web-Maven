@@ -5,6 +5,32 @@ function toggleDropdown(button) {
   dropdownContainer.classList.toggle('open');
 }
 
+// Al cambiar país/provincia, recarga los combos dependientes sin buscar eventos.
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("eventSearchForm");
+  if (!form) return;
+
+  const actionInput = document.getElementById("eventSearchAction");
+  const countrySelect = document.getElementById("eventCountry");
+  const provinceSelect = document.getElementById("eventProvince");
+  const localitySelect = document.getElementById("eventLocality");
+
+  if (!actionInput || !countrySelect || !provinceSelect || !localitySelect) return;
+
+  countrySelect.addEventListener("change", function () {
+    actionInput.value = form.dataset.showSearchAction;
+    provinceSelect.value = "";
+    localitySelect.value = "";
+    form.submit();
+  });
+
+  provinceSelect.addEventListener("change", function () {
+    actionInput.value = form.dataset.showSearchAction;
+    localitySelect.value = "";
+    form.submit();
+  });
+});
+
 // ==========================================
 // MODO OSCURO / CLARO (THEME TOGGLE GLOBAL)
 // ==========================================

@@ -3,7 +3,7 @@
 <%@ include file="/html/common/header.jsp"%>
 
 <%
-	EventDTO event = (EventDTO) request.getAttribute("evento");
+	EventDTO event = (EventDTO) request.getAttribute(ConstantsUtils.EVENT);
 	out.println("<h1>" + event.getName() + "</h1>");
 	out.println("<p>" + event.getStatusName() + "</p>");
 	%>

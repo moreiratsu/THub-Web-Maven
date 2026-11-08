@@ -225,6 +225,9 @@ public class PrivateUserServlet extends HttpServlet {
 			
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
+			
+			
+			
 		} else if ("showProfilePhoto".equalsIgnoreCase(action)) {
 		    // ACCION = mostrar la foto de perfil del usuario ----------------------------------------------
 			// primero creamos un objeto ContentMetadata con los metadatos de la imagen de usuario 

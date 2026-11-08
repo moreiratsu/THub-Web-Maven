@@ -83,7 +83,7 @@
 			</button>
 
 			<div class="submenu">
-				<a href="${pageContext.request.contextPath}/html/event/EventSearch.jsp" class="submenu-item">
+				<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>" class="submenu-item">
 					<span class="submenu-dot">•</span> Buscar Evento
 				</a> 
 				<a href="${pageContext.request.contextPath}/Event?action=showNewEvent">

@@ -8,7 +8,7 @@
 <meta charset="UTF-8">
  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 <title>THUB</title>
-<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="icon" type="image/png" href="${pageContext.request.contextPath}/img/favicon.png">
 </head>
 <body>
 <% UserDTO usuario = (UserDTO) request.getSession().getAttribute(ConstantsUtils.USER_SESSION_ATTRIBUTE); %>
