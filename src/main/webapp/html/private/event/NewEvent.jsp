@@ -1,153 +1,246 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 <%@ page import="java.util.List"%>
-<%@ page import="com.alvaro.thub.model.UserDTO"%>
+<%@ page import="com.alvaro.thub.model.Country"%>
+<%@ page import="com.alvaro.thub.model.Format"%>
 <%@ page import="com.alvaro.thub.model.LocalityDTO"%>
-<%@ page import="com.alvaro.thub.utils.ConstantsUtils" %>
+<%@ page import="com.alvaro.thub.model.ProvinceDTO"%>
+<%@ page import="com.alvaro.thub.utils.ConstantsUtils"%>
 
 <%@ include file="/html/common/header.jsp"%>
-<%@ include file="/html/common/topbar.jsp"%> 
+<%@ include file="/html/common/topbar.jsp"%>
+
+
+<%!private String escapar(String valor) {
+		if (valor == null) {
+			return "";
+		}
+
+		return valor.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+				.replace("'", "&#39;");
+	}%>
 
 <%
-    // Verificación de sesión de usuario
-    if (usuario == null) {
-        response.sendRedirect(request.getContextPath() + "/html/public/user/login.jsp");
-        return;
-    }
+if (usuario == null) {
+	response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
+	return;
+}
+String nombreIntroducido = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
 
-    // Recuperamos las listas necesarias cargadas por el Servlet
-    List<LocalityDTO> localidades = (List<LocalityDTO>) request.getAttribute("localidades");
+String formatoIntroducido = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
+
+String fechaInicioIntroducida = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
+
+String fechaFinIntroducida = request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
+
+List<Country> paises = (List<Country>) request.getAttribute("paises");
+
+List<ProvinceDTO> provincias = (List<ProvinceDTO>) request.getAttribute("provincias");
+
+List<LocalityDTO> localidades = (List<LocalityDTO>) request.getAttribute("localidades");
+
+List<Format> formatos = (List<Format>) request.getAttribute("formatos");
+
+String paisSeleccionado = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+
+String provinciaSeleccionada = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+
+String localidadSeleccionada = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+
+String errorMessage = (String) request.getAttribute("error");
 %>
 
 <div class="dashboard-layout">
 
-    <!-- Barra lateral -->
-    <%@ include file="/html/common/asidebar.jsp"%>
+	<%@ include file="/html/common/asidebar.jsp"%>
 
-    <!-- Área de Contenido Principal -->
-    <main class="content-area">
+	<main class="content-area">
 
-        <div class="page-header">
-            <h1 class="section-title">Crear Nuevo Evento</h1>
-            <a href="${pageContext.request.contextPath}/Event?action=search" class="role-badge">
-                ← Volver a Eventos
-            </a>
-        </div>
+		<div class="page-header">
+			<h1 class="section-title">Crear evento</h1>
 
-        <%-- Mensajes de Éxito / Error --%>
-        <% 
-            String successMessage = (String) request.getAttribute("successMessage");
-            String errorMessage = (String) request.getAttribute("error");
-            
-            if (successMessage != null && !successMessage.isEmpty()) { 
-        %>
-            <div class="success-banner">
-                <%= successMessage %>
-            </div>
-        <% } %>
+			<a class="role-badge"
+				href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
+				Volver a eventos </a>
+		</div>
 
-        <% if (errorMessage != null && !errorMessage.isEmpty()) { %>
-            <div class="error-banner">
-                <%= errorMessage %>
-            </div>
-        <% } %>
+		<%
+		if (errorMessage != null && !errorMessage.isEmpty()) {
+		%>
+		<div class="error-banner">
+			<%=errorMessage%>
+		</div>
+		<%
+		}
+		%>
 
-        <!-- Formulario de Creación de Evento -->
-        <section class="search-card">
-            <h2 class="section-title" style="font-size: 1rem; margin-bottom: 20px;">Información del Torneo / Evento</h2>
+		<section class="search-card">
+			<h2 class="section-title">Información del evento</h2>
 
-            <form action="${pageContext.request.contextPath}/Event" method="POST">
-                <input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="createEvent">
+			<form id="eventCreateForm"
+				action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>"
+				method="POST"
+				data-show-create-action="<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE %>">
 
-                <div class="filter-grid">
-                    
-                    <!-- Nombre del Evento -->
-                    <div class="input-group" style="grid-column: span 2;">
-                        <label for="name" class="field-label">NOMBRE DEL EVENTO / TORNEO *</label>
-                        <input type="text" id="name" name="<%= ConstantsUtils.REQUEST_PARAM_NAME %>" class="form-control" 
-                               placeholder="Ej: Torneo Regional de Baloncesto 2026" required autocomplete="off">
-                    </div>
+				<input type="hidden" id="eventCreateAction"
+					name="<%=ConstantsUtils.REQUEST_PARAM_ACTION%>"
+					value="<%=ConstantsUtils.REQUEST_EVENT_ACTION_CREATE%>">
 
-                    <!-- Deporte / Tipo de Evento -->
-                    <div class="input-group">
-                        <label for="sport" class="field-label">DEPORTE / DISCIPLINA *</label>
-                        <input type="text" id="sport" name="sport" class="form-control" 
-                               placeholder="Ej: Fútbol 7, Baloncesto, Pádel..." required autocomplete="off">
-                    </div>
+				<div class="filter-grid">
 
-                    <!-- Localidad -->
-                    <div class="input-group">
-                        <label for="localityId" class="field-label">LOCALIDAD *</label>
-                        <select id="localityId" name="<%= ConstantsUtils.REQUEST_PARAM_LOCALITY_ID %>" class="form-control" required>
-                            <option value="">-- Selecciona Localidad --</option>
-                            <% 
-                                if (localidades != null && !localidades.isEmpty()) {
-                                    for (LocalityDTO loc : localidades) {
-                            %>
-                                <option value="<%= loc.getId() %>">
-                                    <%= loc.getName() %> (<%= loc.getProvinceName() != null ? loc.getProvinceName() : "" %>)
-                                </option>
-                            <% 
-                                    }
-                                } 
-                            %>
-                        </select>
-                    </div>
+					<div class="input-group">
+						<label for="eventName" class="field-label"> NOMBRE DEL
+							EVENTO * </label> <input type="text" id="eventName"
+							name="<%=ConstantsUtils.REQUEST_PARAM_NAME%>"
+							class="form-control" required placeholder="Ej.: Torneo de fútbol"
+							value="<%=escapar(nombreIntroducido)%>">
+					</div>
 
-                    <!-- Dirección / Instalación -->
-                    <div class="input-group" style="grid-column: span 2;">
-                        <label for="location" class="field-label">LUGAR / INSTALACIÓN DEPORTIVA</label>
-                        <input type="text" id="location" name="location" class="form-control" 
-                               placeholder="Ej: Pabellón Municipal Polideportivo" autocomplete="off">
-                    </div>
+					<div class="input-group">
+						<label for="formatId" class="field-label">FORMATO *</label> <select
+							id="formatId" name="<%=ConstantsUtils.REQUEST_PARAM_FORMAT_ID%>"
+							class="form-control" required>
+							<option value="">Selecciona un formato</option>
 
-                    <!-- Fecha de Inicio -->
-                    <div class="input-group">
-                        <label for="startDate" class="field-label">FECHA DE INICIO *</label>
-                        <input type="date" id="startDate" name="startDate" class="form-control" required>
-                    </div>
+							<%
+							if (formatos != null) {
+								for (Format formato : formatos) {
+							%>
+							<option value="<%=formato.getId()%>"
+								<%=String.valueOf(formato.getId()).equals(formatoIntroducido) ? "selected" : ""%>>
+								<%=escapar(formato.getName())%>
+							</option>
+							<%
+							}
+							}
+							%>
 
-                    <!-- Fecha de Fin -->
-                    <div class="input-group">
-                        <label for="endDate" class="field-label">FECHA DE FIN *</label>
-                        <input type="date" id="endDate" name="endDate" class="form-control" required>
-                    </div>
+						</select>
+					</div>
 
-                    <!-- Límite de Participantes / Equipos -->
-                    <div class="input-group">
-                        <label for="maxParticipants" class="field-label">Nº MÁXIMO DE PARTICIPANTES/EQUIPOS</label>
-                        <input type="number" id="maxParticipants" name="maxParticipants" class="form-control" 
-                               placeholder="Ej: 16" min="2">
-                    </div>
+					<div class="input-group">
+						<label for="startDate" class="field-label"> FECHA DE
+							INICIO * </label> <input type="date" id="startDate"
+							name="<%=ConstantsUtils.REQUEST_PARAM_START_DATE%>"
+							class="form-control" required
+							value="<%=escapar(fechaInicioIntroducida)%>">
+					</div>
+					<div id="startDateError" class="error-banner" hidden></div>
+					<!-- javascript para controlar que la fecha de inicio de evento no sea anterior a la fecha actual -->
+					<div class="input-group">
+						<label for="endDate" class="field-label"> FECHA DE FIN * </label>
+						<input type="date" id="endDate"
+							name="<%=ConstantsUtils.REQUEST_PARAM_END_DATE%>"
+							class="form-control" required
+							value="<%=escapar(fechaFinIntroducida)%>">
+					</div>
 
-                    <!-- Precio de Inscripción -->
-                    <div class="input-group">
-                        <label for="price" class="field-label">PRECIO DE INSCRIPCIÓN (€)</label>
-                        <input type="number" id="price" name="price" class="form-control" 
-                               placeholder="0.00" step="0.01" min="0">
-                    </div>
+					<div class="input-group">
+						<label for="countryId" class="field-label">PAÍS *</label> <select
+							id="createEventCountry"
+							name="<%=ConstantsUtils.REQUEST_PARAM_COUNTRY_ID%>"
+							class="form-control" required>
+							<option value="">Selecciona un país</option>
 
-                </div>
+							<%
+							if (paises != null) {
+								for (Country pais : paises) {
+							%>
+							<option value="<%=pais.getId()%>"
+								<%=String.valueOf(pais.getId()).equals(paisSeleccionado) ? "selected" : ""%>>
+								<%=pais.getName()%>
+							</option>
+							<%
+							}
+							}
+							%>
+						</select>
+					</div>
 
-                <!-- Descripción del Evento -->
-                <div class="input-group" style="margin-top: 16px;">
-                    <label for="description" class="field-label">DESCRIPCIÓN Y REGLAMENTO</label>
-                    <textarea id="description" name="description" class="form-control" rows="4" 
-                              placeholder="Añade detalles sobre las reglas, premios, formato de la competición..." style="resize: vertical;"></textarea>
-                </div>
+					<div class="input-group">
+						<label for="provinceId" class="field-label">PROVINCIA </label> <select
+							id="createEventProvince"
+							name="<%=ConstantsUtils.REQUEST_PARAM_PROVINCE_ID%>"
+							class="form-control">
+							<option value="">Selecciona una provincia</option>
 
-                <div class="form-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-                    <a href="${pageContext.request.contextPath}/Event?action=search" class="register-btn" style="width: auto; margin-top: 0; padding: 10px 20px;">
-                        Cancelar
-                    </a>
-                    <button type="submit" class="btn-primary" style="padding: 10px 28px;">
-                        Crear Evento
-                    </button>
-                </div>
+							<%
+							if (provincias != null) {
+								for (ProvinceDTO provincia : provincias) {
+							%>
+							<option value="<%=provincia.getId()%>"
+								<%=String.valueOf(provincia.getId()).equals(provinciaSeleccionada) ? "selected" : ""%>>
+								<%=provincia.getName()%>
+								<%
+								if (provincia.getCountryName() != null) {
+								%> (<%=provincia.getCountryName()%>)
+								<%
+								}
+								%>
+							</option>
+							<%
+							}
+							}
+							%>
+						</select>
+					</div>
 
-            </form>
-        </section>
+					<div class="input-group">
+						<label for="localityId" class="field-label">LOCALIDAD </label> <select
+							id="createEventLocality"
+							name="<%=ConstantsUtils.REQUEST_PARAM_LOCALITY_ID%>"
+							class="form-control">
+							<option value="">Selecciona una localidad</option>
 
-    </main>
+							<%
+							if (localidades != null) {
+								for (LocalityDTO localidad : localidades) {
+							%>
+							<option value="<%=localidad.getId()%>"
+								<%=String.valueOf(localidad.getId()).equals(localidadSeleccionada) ? "selected" : ""%>>
+								<%=localidad.getName()%>
+								<%
+								if (localidad.getProvinceName() != null) {
+								%> (<%=localidad.getProvinceName()%>)
+								<%
+								}
+								%>
+							</option>
+							<%
+							}
+							}
+							%>
+						</select>
+					</div>
+
+				</div>
+
+				<div class="search-card">
+					<p>
+						<strong>Organizador: </strong>
+						<%=usuario.getName() != null ? usuario.getName() : ""%>
+						<%=usuario.getLastName1() != null ? usuario.getLastName1() : ""%>
+					</p>
+
+
+				</div>
+
+				<div class="form-actions"
+					style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+
+					<a class="register-btn"
+						style="width: auto; margin-top: 0; padding: 10px 20px;"
+						href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
+						Cancelar </a>
+
+					<button type="submit" class="btn-primary"
+						style="padding: 10px 28px;">Crear evento</button>
+				</div>
+
+			</form>
+		</section>
+
+	</main>
 </div>
 
 <%@ include file="/html/common/footer.jsp"%>

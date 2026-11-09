@@ -19,6 +19,8 @@ LISTA DE COSAS PENDIENTES:
  
  Dentro de la vista detalle de eventos en el futuro tengo que poner los resultados, los equipos y participantes que tiene ese evento, y mas datos y detalles.
  
+ añadir mas campos al formulario de creacion de evento deporte, instalación, precio, participantes y descripción
+ 
 pdf con apuntes:
  -quiero que me diga que diferencia hay entre get y post
  -que me haga un diagrama de flujo entre las distintas capas, quien esta en cada una y de que se encargan

@@ -257,3 +257,110 @@
 - El usuario confirma que ambos botones abren el formulario con sesión iniciada y que, sin sesión, AuthenticationFilter redirige al login.
 - Revisión de solo lectura confirma las constantes `EVENT_NEW` y `REQUEST_EVENT_ACTION_SHOW_CREATE`, la rama GET de `PrivateEventServlet` que carga localidades y hace forward a `NewEvent.jsp`, y los enlaces de topbar/asidebar al endpoint privado.
 - Siguiente paso acordado: alinear el formulario de `NewEvent.jsp` y sus enlaces de volver/cancelar con los endpoints y acciones actuales (`PrivateEventServlet` para POST create y `PublicEventServlet` para volver a búsqueda). La acción de persistencia todavía está vacía. No se modificó código en esta revisión.
+
+### Diseño del nuevo formulario de creación (2026-11-09)
+- El usuario solicita reemplazar el JSP antiguo de creación con un formulario acorde al esquema real. Revisión del middleware confirma que `EventDAO.create` persiste: `name`, `start_date`, `end_date`, `format_id`, `status_id`, `creator_user_id`, `country_id`, `province_id`, `locality_id`; `id` lo genera la base de datos.
+- `Event`/`EventDTO` no tienen campos para deporte, instalación, máximo de participantes, precio o descripción, aunque esos controles aparecen en el JSP antiguo; no deben incluirse en el nuevo formulario mientras no se añadan al modelo/DAO/esquema.
+- Diseño recomendado de entrada: formulario solicita nombre, fechas, formato (lista `formatos`) y localidad (lista `localidades`). El servlet obtiene `creatorUserId` de la sesión, establece estado inicial Programado mediante `StatusService`, y deriva `provinceId`/`countryId` usando `LocalityDTO.provinceId` y `ProvinceDTO.countryId` cuando hay localidad. Esto evita confiar en IDs ocultos y evita pedir selecciones redundantes de país/provincia.
+- `PrivateEventServlet.showCreate` actualmente carga `localidades` pero no `formatos`; tras sustituir la JSP habrá que añadir esa lista en el controlador. No se modificó código; se preparará el JSP solicitado en la conversación, y los datos de listas se coordinarán como siguiente paso.
+
+### Aclaración sobre campos que faltan en el formulario (2026-11-09)
+- El usuario señala que el JSP propuesto para creación sigue omitiendo campos. Reconocer que la propuesta mostraba solo nombre, fechas, formato y localidad; aunque se sugirió derivar país/provincia a partir de localidad, el formulario visible aún no incluía esos campos.
+- Según el `EventDAO.create` actual del middleware se insertan exactamente nueve columnas: `name`, `start_date`, `end_date`, `format_id`, `status_id`, `creator_user_id`, `country_id`, `province_id`, `locality_id`; el ID se genera. Los valores de usuario creador y estado inicial deben salir del servidor/session, no confiarse a campos del navegador. País/provincia/localidad deben quedar coherentes entre sí.
+- Los campos de la JSP antigua `sport`, `location`, `maxParticipants`, `price` y `description` no existen actualmente en `Event` ni en la sentencia INSERT, por lo que añadirlos solo al JSP no los guardaría. Aclarar con el usuario si esos atributos también deben persistirse antes de diseñar el formulario final; requerirían cambios del middleware/esquema además del JSP.
+- No se modificó código.
+
+### Campos identificados por el usuario para el formulario (2026-11-09)
+- El usuario aclara que los campos que echaba en falta son país, provincia, usuario creador y estado.
+- País y provincia deben incorporarse como selectores junto con localidad. Usuario creador y estado inicial deben mostrarse como información (si se desea), pero sus IDs se asignan en servidor: creador desde sesión y estado inicial Programado mediante `StatusService`; no usar campos ocultos editables por el navegador.
+- La JSP necesita recibir listas `paises`, `provincias`, `localidades` y `formatos`; el handler `showCreate` actual solo prepara localidades, así que habrá que ampliarlo antes de esperar que todos los desplegables se carguen.
+- No se modificó código.
+
+### Requisitos de creación de evento confirmados (2026-11-09)
+- El usuario pide avanzar muy despacio, un paso cada vez, y que el asistente espere confirmación antes de continuar. No hacer cambios de código sin autorización.
+- Requisitos: al cambiar país, provincias dependientes se cargan sin botón y permaneciendo en el formulario; organizador es el usuario de sesión; estado se deriva de la fecha inicial (futura -> Programado; fecha pasada -> error).
+- Revisión actual: `NewEvent.jsp` tiene los selectores país/provincia/localidad, pero no IDs especiales ni listener JS de creación; mantiene campo informativo usuario creador y estado estático. `PrivateEventServlet.cargarDesplegables` ya consulta provincias por countryId y localidades por provinceId, y la acción `showCreate` vuelve a forwardear la misma JSP, por lo que puede reutilizarse para refrescar combos. `js.js` solo contiene listener para `eventSearchForm`.
+- Primer paso sugerido: añadir identificadores/dataset a formulario y combos de creación y listener change en `js.js` que establezca acción `showCreate`, limpie provincia/localidad según corresponda y envíe el formulario. Como `doPost` delega a `doGet` y el JSP vuelve a renderizarse, esto produce una recarga de la misma vista (no una llamada AJAX) sin botón; conservar la selección de país/provincia leyendo los parámetros ya presentes en JSP.
+- Pasos siguientes, aún no explicar hasta confirmación: organizador y creatorUserId siempre desde sesión; estado/programado y rechazo de fecha pasada en navegador y servidor; implementar persistencia EventService.create.
+- No se modificó código en esta revisión.
+
+### Confirmación del paso 1 y siguiente paso de estado (2026-11-09)
+- El usuario confirma que la recarga automática de los combos de país/provincia/localidad quedó implementada.
+- Revisión actual: `NewEvent.jsp` tiene los IDs esperados y `js.js` contiene el listener que usa `showCreate` y limpia opciones dependientes. El JSP ya muestra nombre y primer apellido desde el objeto `usuario` de sesión; todavía no muestra el segundo apellido. `PrivateEventServlet` obtiene `user` de sesión, pero su rama `create` sigue vacía, de modo que el ID del creador aún no se asigna al `Event` ni persiste.
+- Paso que se explicará ahora: frontend de fecha de inicio, rechazo visual de fecha pasada y estado mostrado dinámicamente como Programado para fecha de hoy/futura. Más adelante el mismo rechazo y la asignación de statusId deben repetirse en el servidor; el ID de usuario creador también se asignará desde sesión al crear.
+- No se modificó código.
+
+### Cambio de criterio: estado no se muestra en el formulario de alta (2026-11-09)
+- El usuario aclara que el estado no debe aparecer mientras se crea un evento. Su ciclo: cancelado por acción explícita en edición; programado cuando la fecha de inicio es futura; en curso cuando hoy está entre inicio y fin (incluidos); finalizado cuando hoy supera la fecha de fin.
+- La regla de alta que se conserva es rechazar fecha de inicio pasada. No implementar la vista previa/etiqueta dinámica de estado sugerida antes; si se añadió, retirarla. Mantener el organizador visible desde sesión, sin campo editable.
+- Aunque el estado no aparezca en el formulario, `EventDAO.create` requiere `status_id`; el servlet/servicio debe asignarlo al crear. Las transiciones por fechas deben preservar `cancelado`; la lógica automática se define en servidor para no depender de JavaScript. Si se valida solo al consultar, actualizar de forma coherente los estados que se muestran en detalle/listado.
+- Próximo paso de guía revisado: validación cliente únicamente para impedir fecha inicial pasada y mostrar mensaje; después duplicar validación en servlet y, en pasos posteriores, definir estado inicial/transiciones y cancelación.
+- No se modificó código.
+
+### Validación de fecha de inicio en navegador completada por el usuario (2026-11-09)
+- El usuario confirma que el campo impide seleccionar una fecha anterior a hoy. El estado ya no se mostrará en el formulario; el paso anterior queda corregido y la lógica de estado será del lado servidor.
+- Próximo paso de guía: validación de respaldo en `PrivateEventServlet` al recibir `action=create`: rechazar parámetro ausente/malformado o `LocalDate` anterior a `LocalDate.now()`, recargar desplegables y reenviar `NewEvent.jsp` con el error. Aún no implementar persistencia en este paso.
+- El nombre del organizador se muestra desde el usuario de sesión; al implementar guardado, el servlet deberá asignar `creatorUserId` desde esa misma sesión.
+- No se modificó código.
+
+### Confirmación de validación de fecha inicial en servidor (2026-11-09)
+- El usuario confirma que añadió la validación server-side de fecha de inicio a la rama `create` de `PrivateEventServlet`.
+- La rama sigue sin construir ni persistir un evento. Revisión confirma que el formulario manda `startDate` y `endDate` con las constantes correctas y que `EventService.create(Event)` existe en middleware.
+- Siguiente micro-paso propuesto: dentro de la misma validación comprobar que la fecha de fin está presente y no sea anterior a la de inicio, antes de avanzar a construir el `Event`. No se modificó código.
+
+### Confirmación de validación de fechas en servidor (2026-11-09)
+- El usuario confirma que implementó la comprobación de fecha de fin no anterior al inicio. Revisión de solo lectura confirma que la rama create verifica inicio ausente/pasado, fin ausente/anterior y errores de parseo, y devuelve a la JSP con desplegables recargados.
+- El organizador ya aparece en la JSP desde el `usuario` de sesión. La rama create todavía no construye ni persiste el objeto `Event`.
+- Siguiente paso de guía: leer los parámetros restantes, validar que existan/numéricos y trasladarlos a un objeto `Event`; asignar `creatorUserId` desde sesión. Dejar `statusId` y llamada `eventService.create` para el paso posterior. No se modificó código.
+
+### Auditoría tras el usuario indicar que mapeó el Event (2026-11-09)
+- Al revisar `PrivateEventServlet.java`, la validación de ambas fechas está presente, pero el bloque `create` todavía termina en el comentario `// La fecha es válida. // En el siguiente paso añadiremos aquí la creación del evento.`. No aparece import de `Event`, lecturas de nombre/formato/ubicación ni `nuevoEvento`/`setCreatorUserId`.
+- El usuario indicó que completó el paso de construir `Event`; el estado visible en el workspace no coincide con esa confirmación. No avanzar a asignar status/guardar hasta aclarar si falta guardar/publicar esa edición o si se implementó en otro archivo.
+- No se modificó código.
+
+### Objeto Event añadido; corrección pendiente para niveles geográficos opcionales (2026-11-09)
+- El usuario guardó el paso de creación del objeto. Revisión confirma que `Event` recibe nombre, fechas, formato, país, provincia, localidad y `creatorUserId` desde sesión.
+- El usuario deja país como obligatorio y permite provincia/localidad nulas para eventos nacionales o provinciales. La comprobación de campos admite provincia/localidad vacías, pero inmediatamente `Long.valueOf(provinciaIdTexto)` y `Long.valueOf(localidadIdTexto)` se ejecutan sin condición; con cadena vacía/nula fallan y el catch lo presenta como selección inválida. Además, `NewEvent.jsp` marca actualmente provincia y localidad como `required`.
+- Siguiente paso de orientación: quitar required/asteriscos a provincia y localidad y convertir esos dos parámetros a `Long` solo si tienen valor; si no, asignar `null`. Mantener país/formato obligatorios. Después de este ajuste, seguir con el estado inicial desde fechas y llamada al servicio.
+- El middleware `EventDAO.create` usa `setObject` para country/province/locality con comentario explícito de que pueden ser null. El servicio `StatusService.findByName` busca parcial, insensible a mayúsculas. No se modificó código.
+
+### Estado visible tras la confirmación del ajuste de provincia/localidad (2026-11-09)
+- El usuario confirmó que completó el paso para permitir provincia/localidad vacías, pero la revisión actual del workspace aún muestra `required` en ambos `<select>` de `NewEvent.jsp` y conversiones incondicionales `Long.valueOf(provinciaIdTexto/localidadIdTexto)` en `PrivateEventServlet`.
+- No avanzar a asignar status hasta que este cambio esté guardado en los archivos observados, para no crear un paso siguiente sobre un caso de ubicación que seguirá fallando.
+- No se modificó código.
+
+### Revisión repetida de provincia/localidad opcionales (2026-11-09)
+- El usuario indicó que ya realizó el ajuste. La parte del servlet sí está corregida: solo convierte province/locality cuando el texto tiene valor y permite null.
+- En `NewEvent.jsp`, provincia y localidad todavía conservan asterisco y atributo HTML `required` (líneas actuales 153-158 y 175-180). Por tanto, el navegador sigue obligando a elegirlas y el caso nacional/provincial no se completa desde la interfaz. Solicitar quitar `required` y los asteriscos de ambas etiquetas antes de seguir con status.
+- No se modificó código.
+
+### Provincia/localidad opcionales confirmadas (2026-11-09)
+- Revisión de solo lectura confirma que `NewEvent.jsp` ya no marca provincia ni localidad como obligatorias y que `PrivateEventServlet` convierte ambos IDs vacíos a `null`. El país sigue obligatorio; el creador se asigna desde `user.getId()`.
+- Próximo paso de guía: añadir `StatusService` para buscar el estado inicial persistido: fecha inicio posterior a hoy -> `Programado`; fecha inicio hoy -> `En curso` (las fechas pasadas ya se rechazan). Asignar `statusId` al `Event`, sin mostrar selector de estado. Cancelado se reserva para una acción posterior de edición; las transiciones por paso del tiempo se abordarán después.
+- No se modificó código.
+
+### Estado inicial asignado por fecha completado por el usuario (2026-11-09)
+- Revisión confirma que `PrivateEventServlet` obtiene `StatusService`, busca coincidencia exacta de `Programado` si fecha de inicio es futura o `En curso` si empieza hoy, y asigna `statusId` al `Event`. No se muestra estado en la JSP. País obligatorio, provincia/localidad opcionales, y `creatorUserId` sale de sesión.
+- Aún no se llama a `eventService.create`; el siguiente paso es sacar `nuevoEvento` del try local para que siga visible, llamar al servicio, manejar null/ServiceException y redirigir al detalle del evento creado usando su ID.
+- No se modificó código ni se ejecutaron pruebas.
+
+### Persistencia y redirección añadidas por el usuario (2026-11-09)
+- Revisión confirma que `PrivateEventServlet` crea `Event`, asigna campos/creator/statusId, llama a `eventService.create`, comprueba resultado y redirige al detalle con el ID.
+- Hallazgo importante antes de prueba: en el `catch (DateTimeParseException)` se hace forward de vuelta a NewEvent.jsp pero falta `return`; el flujo continúa después del catch y llega a `eventService.create(nuevoEvento)` con un evento no válido. Añadir `return` justo después del forward en ese catch antes de probar.
+- Próximo paso tras este arreglo: prueba manual integral de alta con datos válidos y casos de error; si funciona, revisar retención de valores y transiciones automáticas de estado/cancelación.
+- No se modificó código ni se ejecutaron pruebas.
+
+### Guard clause de fecha inválida añadido por el usuario (2026-11-09)
+- Revisión confirma que el `return` quedó inmediatamente después del forward en `catch (DateTimeParseException)`, por lo que una fecha malformada ya no cae hasta `eventService.create`.
+- Siguiente paso en el flujo guiado: prueba manual del alta válida con inicio futuro (esperar redirección al detalle y estado Programado), y alta con inicio hoy (En curso); comprobar también evento nacional con solo país, y fecha fin anterior a inicio (error y sin alta). No se ejecutaron pruebas por el asistente.
+
+### Diagnóstico de campos del formulario que desaparecen al cambiar país (2026-11-09)
+- El usuario informa que nombre, formato y fechas desaparecen al seleccionar país en alta de evento. Revisión confirma que el listener de `js.js` envía el formulario con acción `showCreate`; `PrivateEventServlet.cargarDesplegables` hace forward a la misma JSP. Los parámetros siguen disponibles en el request, pero `NewEvent.jsp` solo lee país/provincia/localidad; los inputs de texto/fecha no tienen `value` y la opción de formato no restaura `selected`.
+- Solución orientada al usuario: leer nombre, formato y fechas desde `request.getParameter` en `NewEvent.jsp`; rellenar atributos `value` para input nombre/fechas y marcar `selected` en la opción de formato coincidente. No hace falta cambiar el listener ni el servlet.
+- No se modificó código.
+
+### Revisión de `NewEvent.jsp` tras pérdida de datos al cambiar país (2026-11-09)
+- El usuario pidió revisar la JSP, sin autorización para cambiar código. No se modificó ningún archivo de código.
+- La JSP ya recupera desde `request` el nombre, formato, fecha inicial y fecha final y los vuelve a escribir en sus controles; también conserva país, provincia y localidad seleccionados. Los valores de texto/fecha pasan por `escapar(...)`, y el JavaScript hace submit del mismo formulario para recargar provincia/localidad. Por tanto, la JSP ya incorpora el mecanismo necesario para conservar los campos al cambiar país/provincia.
+- Se detectó un error en el bucle del combo de formato (`NewEvent.jsp`, líneas 110-120): cada `<option>` abre con el id y `selected`, pero no imprime el nombre del formato ni cierra la etiqueta `</option>`. Esto deja las opciones vacías/mal formadas y debe corregirse antes de considerar la JSP lista. No se modificó el código; pendiente explicar al usuario el bloque correcto si lo solicita.
+- El usuario aplicó el bloque corregido del combo de formato: cada opción imprime `formato.getName()` y cierra `</option>`, conservando `selected` según el parámetro recibido. Después confirmó que completó la prueba de conservación del formulario al cambiar país; no se hicieron cambios al código por parte del asistente.

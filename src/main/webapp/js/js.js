@@ -75,3 +75,76 @@ function toggleTheme() {
         });
     }
 })();
+// Recarga las provincias y localidades del formulario de creación.
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("eventCreateForm");
+  if (!form) return;
+
+  const actionInput = document.getElementById("eventCreateAction");
+  const countrySelect = document.getElementById("createEventCountry");
+  const provinceSelect = document.getElementById("createEventProvince");
+  const localitySelect = document.getElementById("createEventLocality");
+
+  if (!actionInput || !countrySelect || !provinceSelect || !localitySelect) return;
+
+  countrySelect.addEventListener("change", function () {
+    actionInput.value = form.dataset.showCreateAction;
+    provinceSelect.value = "";
+    localitySelect.value = "";
+    form.submit();
+  });
+
+  provinceSelect.addEventListener("change", function () {
+    actionInput.value = form.dataset.showCreateAction;
+    localitySelect.value = "";
+    form.submit();
+  });
+});
+
+// Impide enviar un evento con una fecha de inicio anterior a hoy.
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("eventCreateForm");
+  const startDateInput = document.getElementById("startDate");
+  const errorBox = document.getElementById("startDateError");
+
+  if (!form || !startDateInput || !errorBox) return;
+
+  // La fecha local de hoy, con el formato que utiliza input type="date".
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const todayString = `${year}-${month}-${day}`;
+
+  // El selector de calendario no permite escoger un día anterior a hoy.
+  startDateInput.min = todayString;
+
+  function validateStartDate() {
+    const selectedDate = startDateInput.value;
+
+    if (!selectedDate || selectedDate >= todayString) {
+      errorBox.textContent = "";
+      errorBox.hidden = true;
+      startDateInput.setCustomValidity("");
+      return true;
+    }
+
+    const message = "La fecha de inicio no puede estar en el pasado.";
+
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+    startDateInput.setCustomValidity(message);
+
+    return false;
+  }
+
+  startDateInput.addEventListener("input", validateStartDate);
+  startDateInput.addEventListener("change", validateStartDate);
+
+  form.addEventListener("submit", function (event) {
+    if (!validateStartDate()) {
+      event.preventDefault();
+      startDateInput.reportValidity();
+    }
+  });
+});
