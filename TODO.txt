@@ -21,10 +21,3 @@ LISTA DE COSAS PENDIENTES:
  
  añadir mas campos al formulario de creacion de evento deporte, instalación, precio, participantes y descripción
  
-pdf con apuntes:
- -quiero que me diga que diferencia hay entre get y post
- -que me haga un diagrama de flujo entre las distintas capas, quien esta en cada una y de que se encargan
- -la diferencia entre forward y redirect
- -como funcionan los filtros (web.xml y autentication filter)
- -que significa maven y porque es importante
- -

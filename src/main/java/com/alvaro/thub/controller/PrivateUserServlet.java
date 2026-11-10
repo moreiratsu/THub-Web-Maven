@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.alvaro.thub.model.ContentData;
+import com.alvaro.thub.model.ContentException;
 import com.alvaro.thub.model.ContentMetadata;
 import com.alvaro.thub.model.Gender;
 import com.alvaro.thub.model.LocalityDTO;
@@ -204,7 +205,7 @@ public class PrivateUserServlet extends HttpServlet {
 		        cm.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
 		        cm.setEntityId(user.getId().toString()); // El ID del usuario logueado
 		        cm.setResourceType(ConstantsUtils.USER_PROFILE_RESOURCE_TYPE);
-		        cm.setFormat(".png"); // TODO: Podrías extraer la extensión real en el futuro si lo necesitas
+		        cm.setFormat(".png"); // TODO: extraer la extensión real en el futuro si lo necesitas
 		        
 		        c.setMetadata(cm);
 		        c.setRaw(bytesFoto);
@@ -243,8 +244,10 @@ public class PrivateUserServlet extends HttpServlet {
 
 			    response.setContentType("image/png");
 			    response.getOutputStream().write(bytes);
-			} catch (ServiceException se) {
-				logger.error("Error al obtener la foto de perfil para el usuario: " + user.getId(), se);
+			    response.getOutputStream().flush();
+			    
+			} catch (ContentException ce) {
+				logger.error("Error al obtener la foto de perfil para el usuario: " + user.getId(), ce);
 			    response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			}
 			return;		

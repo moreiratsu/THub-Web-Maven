@@ -96,5 +96,6 @@ public final class ConstantsUtils {
 	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
 	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_CREATE = "showCreate";
+	public static final String REQUEST_EVENT_ACTION_SHOW_MY_EVENTS = "showMyEvents";
 
 }

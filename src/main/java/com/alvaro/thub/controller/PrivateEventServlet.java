@@ -125,20 +125,76 @@ public class PrivateEventServlet extends HttpServlet {
 		// Accion = borrar
 		else if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
 			// Action: Eliminar un evento
+			
+			// La petición debe pertenecer a una sesión iniciada.
+		    if (user == null || user.getId() == null) {
+		        response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
+		        return;
+		    }
+			
 			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			
+			
+			// Comprobamos que la URL incluye un ID numérico válido.
+			Long eventId;
+		    try {
+		        if (idStr == null || idStr.isBlank()) {
+		            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
+		            return;
+		        }
+
+		        eventId = Long.valueOf(idStr.trim());
+
+		    } catch (NumberFormatException e) {
+				logger.error("El ID no es válido : " + e);
+		        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
+		        return;
+		    }
+			
+		    
+		    
+		    
+		    
 			try {
-				eventService.delete(Long.valueOf(idStr));
-				// Tras eliminar, refrescamos la lista
-                Results<EventDTO> results = eventService.findBy(new EventCriteria(), 1, Integer.MAX_VALUE);
-                request.setAttribute("results", results);
-                request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
-			} catch (ServiceException se) {
-				se.printStackTrace();
-				// Esto es para que el navegador devuelva texto plano como cuando intentas borrar un evento y no hay permisos en el action delete
-				PrintWriter writer = response.getWriter();
-				logger.error("Error al eliminar el evento con id: " + idStr, se);
-				writer.append("<i>No ha podido borrarse el evento. Por favor contacte con su administrador</i>");
-			}
+				// Buscamos el evento para saber quién lo creó.
+		        EventDTO evento = eventService.findById(eventId);
+
+		        if (evento == null) {
+		            response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
+		            return;
+		        }
+
+		        // El creador del evento debe ser el usuario de la sesión.
+		        if (evento.getCreatorUserId() == null
+		                || !user.getId().equals(evento.getCreatorUserId())) {
+		            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+		                    "No tienes permiso para borrar este evento.");
+		            return;
+		        }
+		        
+		        
+		        
+		     // Solo llegamos aquí si el usuario es el creador.
+		        boolean eliminado = eventService.delete(eventId);
+
+		        if (!eliminado) {
+		            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+		                    "No se pudo borrar el evento.");
+		            return;
+		        }
+
+		        Results<EventDTO> results =
+		                eventService.findBy(new EventCriteria(), 1, Integer.MAX_VALUE);
+
+		        request.setAttribute("results", results);
+		        request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH)
+		               .forward(request, response);
+
+		    } catch (ServiceException se) {
+		        logger.error("Error al eliminar el evento con ID: " + eventId, se);
+		        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+		                "Se produjo un error al borrar el evento.");
+		    }
 			
 			
 			

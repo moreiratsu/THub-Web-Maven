@@ -24,6 +24,7 @@
 
 
 		<%
+
 		List<Country> paises = (List<Country>) request.getAttribute("paises");
 
 		List<ProvinceDTO> provincias = (List<ProvinceDTO>) request.getAttribute("provincias");
@@ -300,11 +301,17 @@
                                     <path
 												d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
+                                </svg> <!-- BLOQUE PARA QUE APAREZCAN LOS BOTONES DE ELIMINAR O EDITAR SI ERES EL CREADOR DE ESE EVENTO -->
 									</a>
 									<!-- Editar -->
+									<%
+									boolean esCreador = usuario != null && usuario.getId() != null && e.getCreatorUserId() != null
+											&& usuario.getId().equals(e.getCreatorUserId());
+
+									if (esCreador) {
+									%>
 									<a
-										href="${pageContext.request.contextPath}/Event?action=editView&id=<%= e.getId() %>"
+										href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= e.getId() %>"
 										title="Editar Evento" class="action-btn action-edit"> <svg
 											viewBox="0 0 24 24" fill="none" stroke="currentColor"
 											stroke-width="2">
@@ -316,7 +323,7 @@
 									</a>
 									<!-- Eliminar -->
 									<a
-										href="${pageContext.request.contextPath}/Event?action=delete&id=<%= e.getId() %>"
+										href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_DELETE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= e.getId() %>"
 										title="Eliminar Evento" class="action-btn action-delete"
 										onclick="return confirm('¿Seguro que deseas eliminar este evento?');">
 										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -326,6 +333,9 @@
 												d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 </svg>
 									</a>
+									<%
+									}
+									%>
 								</div>
 							</td>
 						</tr>
