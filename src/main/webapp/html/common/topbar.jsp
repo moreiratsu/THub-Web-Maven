@@ -56,24 +56,61 @@
       <% 
         } else { 
       %>
-          <!-- Si SÍ está logueado: Llama a la acción showProfile del Servlet -->
-          <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?action=showProfile" class="role-badge role-badge-user">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <div class="user-badge-text">
-              <span class="user-name-text"><%= usuarioTopbar.getName() %></span>
-              <span class="user-role-text">
-                <%= usuarioTopbar.getRolName() != null ? usuarioTopbar.getRolName() : "Usuario" %>
-               </span>
-            </div>
-          </a>
+          <!-- Usuario conectado: botón que abrirá el desplegable -->
+<div class="account-dropdown">
 
-          <!-- Botón de Cierre de Sesión -->
-          <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>?action=logout" class="btn-primary" style="background-color: #222; color: #fff; text-decoration: none;">
-            Salir
-          </a>
+    <button type="button"
+            id="accountDropdownButton"
+            class="role-badge role-badge-user account-menu-button"
+            aria-expanded="false"
+            aria-controls="accountDropdownMenu"
+            onclick="toggleAccountDropdown()">
+
+        <svg width="18" height="18" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+
+        <div class="user-badge-text">
+            <span class="user-name-text"><%= usuarioTopbar.getName() %></span>
+            <span class="user-role-text">
+                <%= usuarioTopbar.getRolName() != null
+                        ? usuarioTopbar.getRolName()
+                        : "Usuario" %>
+            </span>
+        </div>
+
+    </button>
+
+    <div id="accountDropdownMenu"
+         class="account-dropdown-menu"
+         hidden>
+
+        <a class="account-dropdown-item"
+           href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_MY_EVENTS %>">
+            <svg width="18" height="18" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 6h13M8 12h13M8 18h13"></path>
+                <path d="M3 6h.01M3 12h.01M3 18h.01"></path>
+            </svg>
+            <span>Mis eventos</span>
+        </a>
+
+        <a class="account-dropdown-item account-logout-item"
+           href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=logout">
+            <svg width="18" height="18" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 17l5-5-5-5"></path>
+                <path d="M15 12H3"></path>
+                <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"></path>
+            </svg>
+            <span>Cerrar sesión</span>
+        </a>
+
+    </div>
+</div>
+
       <% 
         } 
       %>

@@ -4,7 +4,42 @@ function toggleDropdown(button) {
   const dropdownContainer = button.closest('.nav-item-dropdown');
   dropdownContainer.classList.toggle('open');
 }
+function toggleAccountDropdown() {
+  const button = document.getElementById("accountDropdownButton");
+  const menu = document.getElementById("accountDropdownMenu");
 
+  if (!button || !menu) return;
+
+  const abrirMenu = menu.hidden;
+  menu.hidden = !abrirMenu;
+  button.setAttribute("aria-expanded", String(abrirMenu));
+}
+
+document.addEventListener("click", function (event) {
+  const container = document.querySelector(".account-dropdown");
+  const button = document.getElementById("accountDropdownButton");
+  const menu = document.getElementById("accountDropdownMenu");
+
+  if (!container || !button || !menu) return;
+
+  // Si se pulsa fuera del menú, lo cerramos.
+  if (!container.contains(event.target)) {
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+  }
+});
+
+document.addEventListener("keydown", function (event) {
+  if (event.key !== "Escape") return;
+
+  const button = document.getElementById("accountDropdownButton");
+  const menu = document.getElementById("accountDropdownMenu");
+
+  if (!button || !menu) return;
+
+  menu.hidden = true;
+  button.setAttribute("aria-expanded", "false");
+});
 // Al cambiar país/provincia, recarga los combos dependientes sin buscar eventos.
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("eventSearchForm");

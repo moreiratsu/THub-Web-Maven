@@ -414,6 +414,42 @@ public class PrivateEventServlet extends HttpServlet {
 			// Accion = actualizar 
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE.equalsIgnoreCase(action)) {
 			
+		}else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_MY_EVENTS.equalsIgnoreCase(action)) {
+
+		    // Para ver los eventos propios hace falta tener sesión iniciada.
+		    if (user == null || user.getId() == null) {
+		        response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
+		        return;
+		    }
+
+		    try {
+		        // Buscamos los eventos cuyo creador es el usuario conectado.
+		        List<EventDTO> misEventos = eventService.findByCreator(user.getId());
+
+		        // EventSearch.jsp recibe los resultados en formato Results.
+		        if (misEventos == null) {
+		            misEventos = new java.util.ArrayList<>();
+		        }
+
+		        Results<EventDTO> results = new Results<>();
+		        results.setPage(misEventos);
+
+		        request.setAttribute("results", results);
+
+		        cargarDesplegables(request);
+
+		        request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH)
+		               .forward(request, response);
+		        return;
+
+		    } catch (ServiceException se) {
+		        logger.error("Error al cargar los eventos del usuario conectado.", se);
+		        response.sendError(
+		                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+		                "No se pudieron cargar tus eventos."
+		        );
+		        return;
+		    }
 		}
 	}
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
