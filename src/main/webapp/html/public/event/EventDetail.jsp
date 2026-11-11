@@ -134,14 +134,15 @@ if (esCreador) {
 <%
 }
 %>
-</div>
-		<%
-		}
-		%>
 <a class="btn-primary"
    href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
     Volver a la búsqueda
 </a>
+</div>
+		<%
+		}
+		%>
+
 
 	</main>
 </div>

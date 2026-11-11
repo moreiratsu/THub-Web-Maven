@@ -74,6 +74,33 @@ String errorMessage = (String) request.getAttribute("error");
 		}
 		%>
 
+
+
+		<!-- Formulario para seleccionar y enviar la foto de imagen -->
+		<section class="search-card">
+			<h2 class="section-title"
+				style="font-size: 1rem; margin-bottom: 16px;">Cartel del evento</h2>
+			<!-- AQUI mostramos la imagen del evento actual del usuario, si existe , si no mostramos un placeholder -->
+			<img class="event-poster"
+                 src="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>"
+                 onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/img/event_poster.jpg';">
+			<form
+				action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_USER_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP %>"
+				method="POST" enctype="multipart/form-data">
+				
+				<div class="input-group">
+				<br>
+					<label for="profilePhoto" class="field-label">SELECCIONA
+						UNA IMAGEN</label> <input type="file" id="profilePhoto" name="photo"
+						class="form-control" accept=".png"
+						aria-describedby="profilePhotoHelp" /> <small
+						id="profilePhotoHelp">Formato permitido: PNG.</small>
+				</div>
+
+			</form>
+		</section>
+
+		<!-- SECCION DEL FORMULARIO DE DATOS DEL EVENTO -->
 		<section class="search-card">
 			<h2 class="section-title">Información del evento</h2>
 

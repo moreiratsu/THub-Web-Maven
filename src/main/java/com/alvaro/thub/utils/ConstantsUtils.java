@@ -42,6 +42,7 @@ public final class ConstantsUtils {
 	public static final String EVENT_SEARCH = "/html/public/event/EventSearch.jsp";
 	public static final String EVENT_DETAIL = "/html/public/event/EventDetail.jsp";
 	public static final String EVENT_NEW = "/html/private/event/NewEvent.jsp";
+	public static final String EVENT_EDIT = "/html/private/event/EditEvent.jsp";
 
 	
 	/*------------------------------------------------------------------------------
@@ -93,6 +94,7 @@ public final class ConstantsUtils {
 	public static final String REQUEST_EVENT_ACTION_DELETE = "delete";
 	public static final String REQUEST_EVENT_ACTION_CREATE = "create";
 	public static final String REQUEST_EVENT_ACTION_UPDATE = "update";
+	public static final String REQUEST_EVENT_ACTION_UPLOAD_LINEUP = "uploadLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
 	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_CREATE = "showCreate";

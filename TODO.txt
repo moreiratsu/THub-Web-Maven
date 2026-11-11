@@ -21,3 +21,4 @@ LISTA DE COSAS PENDIENTES:
  
  añadir mas campos al formulario de creacion de evento deporte, instalación, precio, participantes y descripción
  
+cambiar la forma de calcular los estados del inicio y fin de un evento, de forma que el usuario crador del mismotenga dos bpotones uno para iniciar el evento y otro para finzalizarlo a cancelarlo, el estado guardara esa informacion.

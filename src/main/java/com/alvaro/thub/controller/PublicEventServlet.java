@@ -44,12 +44,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.LocalDate;
-/*
- * Servlet que maneja las peticiones públicas relacionadas con eventos.
- * - buscar eventos
- * - ver detalle de eventos
- */
 
 @WebServlet("/Public/Event")
 public class PublicEventServlet extends HttpServlet {
@@ -121,62 +115,7 @@ public class PublicEventServlet extends HttpServlet {
 		}
 	}
 	
-	private void actualizarEstadosFinalizados() {
-	    try {
-	        // Buscamos el ID del estado "Finalizado" en la base de datos.
-	        List<Status> estadosFinalizados = statusService.findByName("Finalizado");
-	        Long idEstadoFinalizado = null;
-
-	        if (estadosFinalizados != null) {
-	            for (Status estado : estadosFinalizados) {
-	                if (estado.getName() != null
-	                        && estado.getName().trim().equalsIgnoreCase("Finalizado")) {
-	                    idEstadoFinalizado = estado.getId();
-	                    break;
-	                }
-	            }
-	        }
-
-	        if (idEstadoFinalizado == null) {
-	            logger.error("No se encontró el estado 'Finalizado'.");
-	            return;
-	        }
-
-	        // Buscamos todos los eventos.
-	        Results<EventDTO> resultado =
-	                eventService.findBy(new EventCriteria(), 1, Integer.MAX_VALUE);
-
-	        if (resultado == null || resultado.getPage() == null) {
-	            return;
-	        }
-
-	        // Comparamos las fechas sin tener en cuenta la hora.
-	        java.sql.Date fechaDeHoy = java.sql.Date.valueOf(LocalDate.now());
-
-	        for (EventDTO evento : resultado.getPage()) {
-	            if (evento == null || evento.getId() == null || evento.getEndDate() == null) {
-	                continue;
-	            }
-
-	            String estadoActual = evento.getStatusName();
-
-	            // No sobrescribimos los estados Cancelado o Finalizado.
-	            if (estadoActual != null
-	                    && (estadoActual.trim().equalsIgnoreCase("Cancelado")
-	                    || estadoActual.trim().equalsIgnoreCase("Finalizado"))) {
-	                continue;
-	            }
-
-	            // Si la fecha de fin es hoy o anterior, lo marcamos como Finalizado.
-	            if (!evento.getEndDate().after(fechaDeHoy)) {
-	                eventService.updateStatus(evento.getId(), idEstadoFinalizado);
-	            }
-	        }
-
-	    } catch (ServiceException e) {
-	        logger.error("Error al actualizar los estados de los eventos finalizados.", e);
-	    }
-	}
+	
 	
 
 	// Por hacerlo de otra manera, en este Servlet voy a gestionar las acciones de
@@ -199,7 +138,6 @@ public class PublicEventServlet extends HttpServlet {
 
 		// Accion = "search"
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH:
-			actualizarEstadosFinalizados();
 			cargarDesplegables(request);
 			// 1. Lectura de parámetros de la petición
 			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
@@ -290,7 +228,6 @@ public class PublicEventServlet extends HttpServlet {
 					throw new IllegalArgumentException("El ID del evento no puede estar vacío.");
 				}
 				
-				actualizarEstadosFinalizados();
 				
 				// ahora el servlet lee esa acción y el ID, buscar el evento con el servicio y
 				// guardar el resultado en un atributo de la request.
