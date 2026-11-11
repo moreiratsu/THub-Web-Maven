@@ -33,7 +33,8 @@ public final class ConstantsUtils {
 	 VISTAS JSP
 	---------------------------------------------------------------------------------------*/
 	
-	public static final String INDEX = "/index.jsp";	
+	public static final String INDEX = "/index.jsp";
+	public static final String ERROR_404 = "/html/common/error404.jsp";
 	
 	public static final String USER_LOGIN = "/html/public/user/login.jsp";
 	public static final String USER_REGISTER = "/html/public/user/register.jsp";

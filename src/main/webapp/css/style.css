@@ -1540,3 +1540,142 @@ input[type="date"] {
 .event-detail-actions {
     margin-top: 20px;
 }
+
+
+
+
+/* ESTILOS DE LA PAGINA DE ERROR 404 */
+ .error-page {
+  flex: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(
+      ellipse at 50% 10%,
+      rgba(209, 161, 62, 0.10),
+      transparent 42%
+    ),
+    var(--bg-dark);
+}
+
+.error-card {
+  width: min(100%, 680px);
+  padding: clamp(28px, 6vw, 56px);
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.30);
+}
+
+.error-logo {
+  display: block;
+  width: 120px;
+  height: auto;
+  margin: 0 auto 24px;
+}
+
+.error-illustration {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  margin: 0 auto 12px;
+}
+
+.error-code {
+  color: var(--accent-gold);
+  font-size: clamp(4rem, 15vw, 7rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+}
+
+.error-title {
+  margin-top: 16px;
+  color: var(--text-primary);
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
+
+.error-message {
+  max-width: 450px;
+  margin: 12px auto 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.error-button {
+  min-height: 42px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.error-button:hover {
+  transform: translateY(-2px);
+}
+
+.error-button-primary {
+  border: 0;
+  background: var(--accent-gold);
+  color: #000;
+}
+
+.error-button-primary:hover {
+  background: var(--accent-gold-hover);
+}
+
+.error-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.error-button-secondary:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+@media (max-width: 480px) {
+  .error-page {
+    padding: 16px;
+  }
+
+  .error-card {
+    padding: 28px 20px;
+  }
+
+  .error-actions {
+    flex-direction: column;
+  }
+
+  .error-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-button {
+    transition: none;
+  }
+}
+           
+      
