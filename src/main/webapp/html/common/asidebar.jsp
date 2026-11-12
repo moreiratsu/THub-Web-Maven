@@ -51,7 +51,7 @@
 			<br>
 			<span class="user-name"><%= usuarioSidebar.getName() %></span>
 		</a>
-		<% } %>
+		<% } %> 
 	</div>
 
 	<!-- Menú de Navegación -->
@@ -89,6 +89,12 @@
 				<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE %>" class="submenu-item">
 					<span class="submenu-dot">•</span> Nuevo Evento
 				</a>
+				<!-- si el usuario esta login qu aparezca la opcion en el menu de eventos de mis eventos -->
+				<% if (usuarioSidebar != null) { %>
+				<a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_MY_EVENTS %>" class="submenu-item">
+					<span class="submenu-dot">•</span> Mis Eventos
+				</a>
+				<% } %> 
 			</div>
 		</div>
 		
