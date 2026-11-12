@@ -101,4 +101,13 @@ public final class ConstantsUtils {
 	public static final String REQUEST_EVENT_ACTION_SHOW_CREATE = "showCreate";
 	public static final String REQUEST_EVENT_ACTION_SHOW_MY_EVENTS = "showMyEvents";
 
+	
+	/* ------------------------------------------------------------------------------------
+	 TIPOS DE ESTADOS
+	---------------------------------------------------------------------------------------*/
+	public static final String ESTADO_PROGRAMADO = "Programado";
+	public static final String ESTADO_CANCELADO = "Cancelado";
+	public static final String ESTADO_EN_CURSO = "En curso";
+	public static final String ESTADO_FINALIZADO = "Finalizado";
+
 }

@@ -1,77 +1,50 @@
 
 // FUNCION PARA DESPLEGAR LOS SUBMENÚS DE SIDEBAR =====================================================
 function toggleDropdown(button) {
-  const dropdownContainer = button.closest('.nav-item-dropdown');
-  dropdownContainer.classList.toggle('open');
+    const dropdownContainer = button.closest('.nav-item-dropdown');
+    dropdownContainer.classList.toggle('open');
 }
 function toggleAccountDropdown() {
-  const button = document.getElementById("accountDropdownButton");
-  const menu = document.getElementById("accountDropdownMenu");
+    const button = document.getElementById("accountDropdownButton");
+    const menu = document.getElementById("accountDropdownMenu");
 
-  if (!button || !menu) return;
+    if (!button || !menu) return;
 
-  const abrirMenu = menu.hidden;
-  menu.hidden = !abrirMenu;
-  button.setAttribute("aria-expanded", String(abrirMenu));
+    const abrirMenu = menu.hidden;
+    menu.hidden = !abrirMenu;
+    button.setAttribute("aria-expanded", String(abrirMenu));
 }
 
-document.addEventListener("click", function (event) {
-  const container = document.querySelector(".account-dropdown");
-  const button = document.getElementById("accountDropdownButton");
-  const menu = document.getElementById("accountDropdownMenu");
+document.addEventListener("click", function(event) {
+    const container = document.querySelector(".account-dropdown");
+    const button = document.getElementById("accountDropdownButton");
+    const menu = document.getElementById("accountDropdownMenu");
 
-  if (!container || !button || !menu) return;
+    if (!container || !button || !menu) return;
 
-  // Si se pulsa fuera del menú, lo cerramos.
-  if (!container.contains(event.target)) {
-    menu.hidden = true;
-    button.setAttribute("aria-expanded", "false");
-  }
+    // Si se pulsa fuera del menú, lo cerramos.
+    if (!container.contains(event.target)) {
+        menu.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+    }
 });
 
-document.addEventListener("keydown", function (event) {
-  if (event.key !== "Escape") return;
+document.addEventListener("keydown", function(event) {
+    if (event.key !== "Escape") return;
 
-  const button = document.getElementById("accountDropdownButton");
-  const menu = document.getElementById("accountDropdownMenu");
+    const button = document.getElementById("accountDropdownButton");
+    const menu = document.getElementById("accountDropdownMenu");
 
-  if (!button || !menu) return;
+    if (!button || !menu) return;
 
-  menu.hidden = true;
-  button.setAttribute("aria-expanded", "false");
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
 });
 // ---------------------------------------------------------------------------------------------------
 
 
 
 
-
-
-// Al cambiar país/provincia, recarga los combos dependientes sin buscar eventos.
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("eventSearchForm");
-  if (!form) return;
-
-  const actionInput = document.getElementById("eventSearchAction");
-  const countrySelect = document.getElementById("eventCountry");
-  const provinceSelect = document.getElementById("eventProvince");
-  const localitySelect = document.getElementById("eventLocality");
-
-  if (!actionInput || !countrySelect || !provinceSelect || !localitySelect) return;
-
-  countrySelect.addEventListener("change", function () {
-    actionInput.value = form.dataset.showSearchAction;
-    provinceSelect.value = "";
-    localitySelect.value = "";
-    form.submit();
-  });
-
-  provinceSelect.addEventListener("change", function () {
-    actionInput.value = form.dataset.showSearchAction;
-    localitySelect.value = "";
-    form.submit();
-  });
-});
 
 
 
@@ -88,7 +61,7 @@ const MOON_ICON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></p
 function toggleTheme() {
     const themeIcon = document.getElementById("theme-icon");
     const themeToggleBtn = document.getElementById("theme-toggle");
-    
+
     document.body.classList.toggle("light-theme");
 
     let theme = "dark";
@@ -110,9 +83,9 @@ function toggleTheme() {
     const currentTheme = localStorage.getItem("theme");
     if (currentTheme === "light") {
         document.body.classList.add("light-theme");
-        
+
         // Esperamos brevemente a que el DOM pinte el SVG para cambiarlo a Luna
-        window.addEventListener("DOMContentLoaded", function () {
+        window.addEventListener("DOMContentLoaded", function() {
             const themeIcon = document.getElementById("theme-icon");
             const themeToggleBtn = document.getElementById("theme-toggle");
             if (themeIcon) themeIcon.innerHTML = MOON_ICON;
@@ -127,76 +100,167 @@ function toggleTheme() {
 
 
 
-// Recarga las provincias y localidades del formulario de creación.
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("eventCreateForm");
-  if (!form) return;
 
-  const actionInput = document.getElementById("eventCreateAction");
-  const countrySelect = document.getElementById("createEventCountry");
-  const provinceSelect = document.getElementById("createEventProvince");
-  const localitySelect = document.getElementById("createEventLocality");
 
-  if (!actionInput || !countrySelect || !provinceSelect || !localitySelect) return;
+// Impide enviar un evento con una fecha de inicio anterior a hoy---------------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("eventCreateForm");
+    const startDateInput = document.getElementById("startDate");
+    const errorBox = document.getElementById("startDateError");
 
-  countrySelect.addEventListener("change", function () {
-    actionInput.value = form.dataset.showCreateAction;
-    provinceSelect.value = "";
-    localitySelect.value = "";
-    form.submit();
-  });
+    if (!form || !startDateInput || !errorBox) return;
 
-  provinceSelect.addEventListener("change", function () {
-    actionInput.value = form.dataset.showCreateAction;
-    localitySelect.value = "";
-    form.submit();
-  });
+    // La fecha local de hoy, con el formato que utiliza input type="date".
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const todayString = `${year}-${month}-${day}`;
+
+    // El selector de calendario no permite escoger un día anterior a hoy.
+    startDateInput.min = todayString;
+
+    function validateStartDate() {
+        const selectedDate = startDateInput.value;
+
+        if (!selectedDate || selectedDate >= todayString) {
+            errorBox.textContent = "";
+            errorBox.hidden = true;
+            startDateInput.setCustomValidity("");
+            return true;
+        }
+
+        const message = "La fecha de inicio no puede estar en el pasado.";
+
+        errorBox.textContent = message;
+        errorBox.hidden = false;
+        startDateInput.setCustomValidity(message);
+
+        return false;
+    }
+
+    startDateInput.addEventListener("input", validateStartDate);
+    startDateInput.addEventListener("change", validateStartDate);
+
+    form.addEventListener("submit", function(event) {
+        if (!validateStartDate()) {
+            event.preventDefault();
+            startDateInput.reportValidity();
+        }
+    });
+});
+//-----------------------------------------------------------------------------------------------------------------------------------------
+//FUNCION PARA PREVISUALIZAR UNA IMAGEN ANTES DE ENVIARLA CON EL FORMULARIO, NO LA SUBE SOLO LA MUESTRA
+document.addEventListener("DOMContentLoaded", function() {
+    const input = document.getElementById("imagen");
+    const preview = document.getElementById("posterPreview");
+
+    if (!input || !preview) return;
+
+    input.addEventListener("change", function() {
+        const archivo = input.files && input.files[0];
+
+        if (!archivo) {
+            preview.removeAttribute("src");
+            preview.hidden = true;
+            return;
+        }
+
+        const lector = new FileReader();
+
+        lector.addEventListener("load", function() {
+            if (typeof lector.result !== "string") return;
+
+            preview.src = lector.result;
+            preview.hidden = false;
+        });
+
+        lector.readAsDataURL(archivo);
+    });
 });
 
-// Impide enviar un evento con una fecha de inicio anterior a hoy.
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("eventCreateForm");
-  const startDateInput = document.getElementById("startDate");
-  const errorBox = document.getElementById("startDateError");
 
-  if (!form || !startDateInput || !errorBox) return;
 
-  // La fecha local de hoy, con el formato que utiliza input type="date".
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  const todayString = `${year}-${month}-${day}`;
+// Actualiza provincias y localidades sin recargar la página (AJAX). ---------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("eventCreateForm");
+    if (!form) return;
 
-  // El selector de calendario no permite escoger un día anterior a hoy.
-  startDateInput.min = todayString;
+    const countrySelect = document.getElementById("createEventCountry");
+    const provinceSelect = document.getElementById("createEventProvince");
+    const localitySelect = document.getElementById("createEventLocality");
 
-  function validateStartDate() {
-    const selectedDate = startDateInput.value;
+    if (!countrySelect || !provinceSelect || !localitySelect) return;
 
-    if (!selectedDate || selectedDate >= todayString) {
-      errorBox.textContent = "";
-      errorBox.hidden = true;
-      startDateInput.setCustomValidity("");
-      return true;
+    function actualizarDesplegables() {
+        const parametros = new URLSearchParams();
+
+        // Pide al servlet la vista de creación con las opciones actualizadas.
+        parametros.set("action", form.dataset.showCreateAction);
+
+        if (countrySelect.value) {
+            parametros.set("countryId", countrySelect.value);
+        }
+
+        if (provinceSelect.value) {
+            parametros.set("provinceId", provinceSelect.value);
+        }
+
+        const url = new URL(form.getAttribute("action"), window.location.href);
+        url.search = parametros.toString();
+
+        // AJAX: pide la respuesta en segundo plano, sin navegar a ella.
+        return fetch(url.toString())
+            .then(function(respuesta) {
+                if (!respuesta.ok) {
+                    throw new Error("No se pudieron cargar las opciones.");
+                }
+
+                return respuesta.text();
+            })
+            .then(function(html) {
+                // Lee el HTML recibido y extrae solo los dos desplegables.
+                const paginaRecibida =
+                    new DOMParser().parseFromString(html, "text/html");
+
+                const provinciasRecibidas =
+                    paginaRecibida.querySelector("#createEventProvince");
+                const localidadesRecibidas =
+                    paginaRecibida.querySelector("#createEventLocality");
+
+                if (!provinciasRecibidas || !localidadesRecibidas) {
+                    throw new Error("No se encontraron los desplegables recibidos.");
+                }
+
+                // Actualiza las opciones sin reemplazar el formulario.
+                provinceSelect.innerHTML = provinciasRecibidas.innerHTML;
+                localitySelect.innerHTML = localidadesRecibidas.innerHTML;
+            });
     }
 
-    const message = "La fecha de inicio no puede estar en el pasado.";
+    // Al cambiar el país, limpia provincia y localidad y carga sus provincias.
+    countrySelect.addEventListener("change", function() {
+        provinceSelect.innerHTML =
+            '<option value="">Selecciona una provincia</option>';
+        localitySelect.innerHTML =
+            '<option value="">Selecciona una localidad</option>';
 
-    errorBox.textContent = message;
-    errorBox.hidden = false;
-    startDateInput.setCustomValidity(message);
+        if (countrySelect.value) {
+            actualizarDesplegables().catch(function(error) {
+                console.error("Error al cargar las provincias:", error);
+            });
+        }
+    });
 
-    return false;
-  }
+    // Al cambiar la provincia, limpia y carga sus localidades.
+    provinceSelect.addEventListener("change", function() {
+        localitySelect.innerHTML =
+            '<option value="">Selecciona una localidad</option>';
 
-  startDateInput.addEventListener("input", validateStartDate);
-  startDateInput.addEventListener("change", validateStartDate);
-
-  form.addEventListener("submit", function (event) {
-    if (!validateStartDate()) {
-      event.preventDefault();
-      startDateInput.reportValidity();
-    }
-  });
+        if (provinceSelect.value) {
+            actualizarDesplegables().catch(function(error) {
+                console.error("Error al cargar las localidades:", error);
+            });
+        }
+    });
 });

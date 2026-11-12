@@ -1,10 +1,12 @@
 package com.alvaro.thub.controller;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.ByteArrayInputStream;
+import javax.imageio.ImageIO;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import jakarta.servlet.annotation.MultipartConfig;
 
 import com.alvaro.thub.dao.criteria.EventCriteria;
 import com.alvaro.thub.model.ContentData;
@@ -27,7 +29,8 @@ import com.alvaro.thub.utils.ConstantsUtils;
 import com.alvaro.thub.utils.Results;
 import com.alvaro.thub.utils.SessionManager;
 import com.alvaro.thub.utils.WebUtils;
-
+import java.io.InputStream;
+import jakarta.servlet.http.Part;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -55,9 +58,20 @@ import com.alvaro.thub.service.impl.StatusServiceImpl;
 import com.alvaro.thub.service.impl.ProvinceServiceImpl;
 
 @WebServlet("/Private/Event")
+
+/*
+ * Esto indica al servlet que puede recibir formularios con datos y un archivo
+ * Es lo que habilita es poder leer campos normals con request.getParameter() y
+ * archivos con request.getPart() Le especificamos que el tamaño maximo del
+ * archivo sean 2MB y la peticion entera con datos y archivo incluidos no puede
+ * superar 3MB para no sobrecargar al servidor
+ */
+@MultipartConfig(maxFileSize = 2 * 1024 * 1024, maxRequestSize = 3 * 1024 * 1024)
+
 public class PrivateEventServlet extends HttpServlet {
 
 	private static Logger logger = LogManager.getLogger(PrivateEventServlet.class);
+
 	private ContentService contentService = null;
 	private EventService eventService = null;
 	private LocalityService localityService = null;
@@ -78,6 +92,17 @@ public class PrivateEventServlet extends HttpServlet {
 
 	}
 
+	private void volverAEditarCartel(HttpServletRequest request, HttpServletResponse response, Long eventId,
+			String resultado) throws IOException {
+
+		String destino = request.getContextPath() + ConstantsUtils.PRIVATE_EVENT_SERVLET + "?"
+				+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE + "&"
+				+ ConstantsUtils.REQUEST_PARAM_ID + "=" + eventId + "&cartel=" + resultado;
+
+		response.sendRedirect(response.encodeRedirectURL(destino));
+	}
+
+	// Método para llenar los combox con los datos de la base de datos
 	private void cargarDesplegables(HttpServletRequest request) {
 		try {
 			List<Format> formatList = formatService.findAll();
@@ -111,28 +136,242 @@ public class PrivateEventServlet extends HttpServlet {
 		}
 	}
 
+	/*
+	 * Método auxiliar que hace un FORWARD AL FORMULARIO DE CREAR EVENTO CON UN
+	 * MENSAJE DE ERROR, logicamente al volver al formulario tiene que recargar los
+	 * combox con los datos
+	 */
+	private void volverAlFormularioConError(HttpServletRequest request, HttpServletResponse response, String mensaje)
+			throws ServletException, IOException {
+		request.setAttribute("error", mensaje);
+		cargarDesplegables(request);
+		request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
+	}
+
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+
 		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 
-		// accion = mostrar vista de creacion de evento
+		// ACCION = MOSTRAR NewEvent.jsp
 		if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE.equalsIgnoreCase(action)) {
-
 			cargarDesplegables(request);
-
 			request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
 			return;
 		}
-		// Accion = borrar
-		else if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
-			// Action: Eliminar un evento
 
-			// La petición debe pertenecer a una sesión iniciada.
-			if (user == null || user.getId() == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
+		// ACCION = CREAR nuevo evento
+		else if (ConstantsUtils.REQUEST_EVENT_ACTION_CREATE.equalsIgnoreCase(action)) {
+
+			// 1. Cojo la plantilla del objeto evento
+			Event nuevoEvento = new Event();
+
+			// 2. cojo (GET) los parametros del formulario
+			String fechaInicioTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
+			String fechaFinTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
+			String nombreEvento = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
+			String formatoIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
+			String paisIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+			String provinciaIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+			String localidadIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+
+			// 3. Valido que no vengan vacios, tengan formato correcto y no sean null
+			if (fechaInicioTexto == null || fechaInicioTexto.isBlank()) {
+				volverAlFormularioConError(request, response, "Debes indicar la fecha de inicio.");
 				return;
 			}
+
+			try {
+				LocalDate fechaInicio = LocalDate.parse(fechaInicioTexto.trim());
+
+				if (fechaInicio.isBefore(LocalDate.now())) {
+					volverAlFormularioConError(request, response,
+							"La fecha de inicio no puede ser anterior a la fecha actual.");
+					return;
+				}
+				if (fechaFinTexto == null || fechaFinTexto.isBlank()) {
+					volverAlFormularioConError(request, response, "Debes indicar la fecha de fin.");
+					return;
+				}
+
+				LocalDate fechaFin = LocalDate.parse(fechaFinTexto.trim());
+
+				if (fechaFin.isBefore(fechaInicio)) {
+					volverAlFormularioConError(request, response,
+							"La fecha de fin no puede ser anterior a la fecha de inicio.");
+					return;
+				}
+
+				if (nombreEvento == null || nombreEvento.isBlank() || formatoIdTexto == null || formatoIdTexto.isBlank()
+						|| paisIdTexto == null || paisIdTexto.isBlank()) {
+					// dejo que los unicos campos que puedan ser null sean provincia y localidad
+					// porque puede ser un evento nacional, privicial o local
+					volverAlFormularioConError(request, response, "Debes completar todos los campos del evento.");
+					return;
+				}
+
+				// 4. Seteo los datos en la plantilla del objeto evento
+				try {
+					nuevoEvento.setName(nombreEvento.trim());
+					nuevoEvento.setStartDate(java.sql.Date.valueOf(fechaInicio));
+					nuevoEvento.setEndDate(java.sql.Date.valueOf(fechaFin));
+					nuevoEvento.setFormatId(Long.valueOf(formatoIdTexto));
+					nuevoEvento.setCountryId(Long.valueOf(paisIdTexto));
+
+					// si en el formulario provincia o locality vienen vacios el servlet los
+					// convierte a null
+					Long provinciaId = null;
+					if (provinciaIdTexto != null && !provinciaIdTexto.isBlank()) {
+						provinciaId = Long.valueOf(provinciaIdTexto);
+					}
+
+					Long localidadId = null;
+					if (localidadIdTexto != null && !localidadIdTexto.isBlank()) {
+						localidadId = Long.valueOf(localidadIdTexto);
+					}
+
+					nuevoEvento.setProvinceId(provinciaId);
+					nuevoEvento.setLocalityId(localidadId);
+					// El organizador sale de la sesión, no de un campo del formulario.
+					nuevoEvento.setCreatorUserId(user.getId());
+
+					// El estado inicial que seteamos cuando creamos un eventosiempre va a ser
+					// programado
+					List<Status> estados = statusService.findByName(ConstantsUtils.ESTADO_PROGRAMADO);
+
+					if (estados == null || estados.isEmpty()) {
+						volverAlFormularioConError(request, response, "No se encontró el estado Programado.");
+						return;
+					}
+
+					nuevoEvento.setStatusId(estados.get(0).getId());
+
+					// 5. capturo las posibles excepciones
+				} catch (NumberFormatException e) {
+					volverAlFormularioConError(request, response, "Alguna selección del formulario no es válida.");
+					return;
+				} catch (ServiceException se) {
+					logger.error("No se pudo buscar el estado inicial del evento", se);
+					volverAlFormularioConError(request, response, "No se pudo determinar el estado inicial.");
+					return;
+				}
+
+			} catch (DateTimeParseException e) {
+				volverAlFormularioConError(request, response, "Una de las fechas no tiene un formato válido.");
+				return;
+			}
+
+			try {
+
+				// 6. Cargar una foto
+				byte[] bytesCartel = null; // de momento no hay imagen, con lo cual el array de bytes es null, si el
+											// usuario no sube una imagen de carte al crear el evento, el array queda en
+											// null
+				String formatoCartel = null;
+				Part parteCartel = request.getPart("imagen"); // cogemos la parte del formulario que contiene un archivo
+																// en este caso con nombre= "imagen". Recordatorio, aqui
+																// uso getPart y no file upload porque con fileUpload
+																// solo leo los bytes del fichero, pero esta imagen
+																// viene seguida de mas elementos de forlmulariop los
+																// cuales no me dejaria leer si no es con part
+
+				if (parteCartel != null && parteCartel.getSize() > 0) { // si ha subido un archivo, significa que no es
+																		// null y tiene tamaño mayor q 0
+					try (InputStream entrada = parteCartel.getInputStream()) { // leemos el archivo
+						bytesCartel = entrada.readAllBytes(); // le damos al array de bytes lo que lee inputstream
+					}
+					formatoCartel = WebUtils.validarImagen(parteCartel.getSubmittedFileName(), bytesCartel); // aqui
+																												// para
+																												// validar
+																												// la
+																												// imagen
+																												// y el
+																												// formato
+																												// uso
+																												// el
+																												// metodo
+																												// que
+																												// implemente
+																												// enwebutils,
+																												// que
+																												// recibe
+																												// el
+																												// nombre
+																												// del
+																												// archivo
+																												// y el
+																												// array
+																												// de
+																												// bytes,
+																												// getsubmitedfilename
+																												// es un
+																												// metodo
+																												// de la
+																												// clase
+																												// Part
+																												// que
+																												// nos
+																												// da el
+																												// nombre
+																												// de un
+																												// archivo
+					if (formatoCartel == null) {
+						volverAlFormularioConError(request, response,
+								"El archivo debe ser una imagen PNG, JPG o JPEG válida.");
+						return;
+					}
+
+				} // el siguiente paso es guardarlo en el CMS (tiene q hacerse justo despues de
+					// crear porq necesito saber el ID del evento creado)
+
+				// 7. Usamos el servicio para crear el objeto con la plantilla que hemos hecho
+				// de evento
+				EventDTO eventoCreado = eventService.create(nuevoEvento);
+
+				// 8. Hacemos los checkeos por si ha pasado algo
+				if (eventoCreado == null || eventoCreado.getId() == null) {
+					volverAlFormularioConError(request, response, "No se pudo crear el evento.");
+					return;
+				}
+
+				// 9. Si se añadio una imagen en el formulario la guardamos en el CMS
+				if (bytesCartel != null) {
+					ContentMetadata metadata = new ContentMetadata();
+					metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
+					metadata.setEntityId(eventoCreado.getId().toString());
+					metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE);
+					metadata.setFormat(formatoCartel); // le pasamos el que obtenga en el meetodo de la clase utilitaria
+														// de WEBUTILS
+
+					ContentData cartel = new ContentData();
+					cartel.setMetadata(metadata);
+					cartel.setRaw(bytesCartel);
+					try {
+						contentService.save(cartel);
+					} catch (ContentException ce) {
+						logger.error(
+								"El evento " + eventoCreado.getId() + " se creó, pero no se pudo guardar su cartel.",
+								ce);
+					}
+				}
+
+				// 10. Cuando se crea el evento hago Redirect a la vista detalle del mismo
+				String urlDetailView = request.getContextPath() + ConstantsUtils.PUBLIC_EVENT_SERVLET + "?"
+						+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL + "&"
+						+ ConstantsUtils.REQUEST_PARAM_ID + "=" + eventoCreado.getId();
+
+				response.sendRedirect(urlDetailView);
+				return;
+
+			} catch (ServiceException se) {
+				logger.error("Error al crear el evento", se);
+				volverAlFormularioConError(request, response, "No se pudo guardar el evento.");
+				return;
+			}
+
+			// ACCION = ELIMINAR un evento
+		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
 
 			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 
@@ -186,385 +425,172 @@ public class PrivateEventServlet extends HttpServlet {
 						"Se produjo un error al borrar el evento.");
 			}
 
-			// Accion = crear
-		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_CREATE.equalsIgnoreCase(action)) {
-
-			Event nuevoEvento = new Event();
-
-			String fechaInicioTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
-			String fechaFinTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
-
-			if (fechaInicioTexto == null || fechaInicioTexto.isBlank()) {
-				request.setAttribute("error", "Debes indicar la fecha de inicio.");
-				cargarDesplegables(request);
-				request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-				return;
-			}
-
-			try {
-				LocalDate fechaInicio = LocalDate.parse(fechaInicioTexto.trim());
-
-				if (fechaInicio.isBefore(LocalDate.now())) {
-					request.setAttribute("error", "La fecha de inicio no puede estar en el pasado.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				}
-				if (fechaFinTexto == null || fechaFinTexto.isBlank()) {
-					request.setAttribute("error", "Debes indicar la fecha de fin.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				}
-
-				LocalDate fechaFin = LocalDate.parse(fechaFinTexto.trim());
-
-				if (fechaFin.isBefore(fechaInicio)) {
-					request.setAttribute("error", "La fecha de fin no puede ser anterior a la fecha de inicio.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				}
-
-				String nombreEvento = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
-
-				String formatoIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
-
-				String paisIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
-
-				String provinciaIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
-
-				String localidadIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
-
-				if (nombreEvento == null || nombreEvento.isBlank() || formatoIdTexto == null || formatoIdTexto.isBlank()
-						|| paisIdTexto == null || paisIdTexto.isBlank()) {
-					// dejo que los unicos campos que puedan ser null sean provincia y localidad
-					// porque puede ser un evento nacional, privicial o local
-					request.setAttribute("error", "Debes completar todos los campos del evento.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				}
-
-				try {
-
-					nuevoEvento.setName(nombreEvento.trim());
-					nuevoEvento.setStartDate(java.sql.Date.valueOf(fechaInicio));
-					nuevoEvento.setEndDate(java.sql.Date.valueOf(fechaFin));
-
-					nuevoEvento.setFormatId(Long.valueOf(formatoIdTexto));
-					nuevoEvento.setCountryId(Long.valueOf(paisIdTexto));
-
-					// si en el formulario provincia o locality vienen vacios el servlet los
-					// convierte a null
-					Long provinciaId = null;
-					if (provinciaIdTexto != null && !provinciaIdTexto.isBlank()) {
-						provinciaId = Long.valueOf(provinciaIdTexto);
-					}
-
-					Long localidadId = null;
-					if (localidadIdTexto != null && !localidadIdTexto.isBlank()) {
-						localidadId = Long.valueOf(localidadIdTexto);
-					}
-
-					nuevoEvento.setProvinceId(provinciaId);
-					nuevoEvento.setLocalityId(localidadId);
-
-					// El organizador sale de la sesión, no de un campo del formulario.
-					nuevoEvento.setCreatorUserId(user.getId());
-
-					// para darle un estado tenemos que comprobar y tener en cuenta varias reglas:
-					/*
-					 * las reglas:: al crear se asignará Programado si empieza en una fecha futura
-					 * En curso si empieza hoy o cuando la fecha actual sea la inicial de un evento.
-					 * Cancelado se asignará desde acción de edición. La transición automática a
-					 * Finalizado sera cuando la fecha de fin sea igual a la fecha actual.
-					 */
-					String nombreEstadoInicial;
-
-					if (fechaInicio.isAfter(LocalDate.now())) {
-						nombreEstadoInicial = "Programado";
-					} else {
-						// Si empieza hoy, y las fechas ya están validadas, está en curso.
-						nombreEstadoInicial = "En curso";
-					}
-
-					List<Status> estadosEncontrados = statusService.findByName(nombreEstadoInicial);
-
-					Status estadoInicial = null;
-
-					if (estadosEncontrados != null) {
-						for (Status estado : estadosEncontrados) {
-							if (estado.getName() != null
-									&& estado.getName().trim().equalsIgnoreCase(nombreEstadoInicial)) {
-								estadoInicial = estado;
-								break;
-							}
-						}
-					}
-
-					if (estadoInicial == null) {
-						request.setAttribute("error", "No se encontró el estado inicial " + nombreEstadoInicial + ".");
-						cargarDesplegables(request);
-						request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-						return;
-					}
-
-					nuevoEvento.setStatusId(estadoInicial.getId());
-
-					// En el siguiente paso asignaremos el estado y llamaremos al servicio.
-				} catch (NumberFormatException e) {
-					request.setAttribute("error", "Alguna selección del formulario no es válida.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				} catch (ServiceException se) {
-					logger.error("No se pudo buscar el estado inicial del evento", se);
-					request.setAttribute("error", "No se pudo determinar el estado inicial.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				}
-
-				// La fecha es válida.
-				// En el siguiente paso añadiremos aquí la creación del evento.
-
-			} catch (DateTimeParseException e) {
-				request.setAttribute("error", "Una de las fechas no tiene un formato válido.");
-				cargarDesplegables(request);
-				request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-				return;
-			}
-
-			try {
-				EventDTO eventoCreado = eventService.create(nuevoEvento);
-
-				if (eventoCreado == null || eventoCreado.getId() == null) {
-					request.setAttribute("error", "No se pudo crear el evento.");
-					cargarDesplegables(request);
-					request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-					return;
-				}
-
-				String urlDetalle = request.getContextPath() + ConstantsUtils.PUBLIC_EVENT_SERVLET + "?"
-						+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL + "&"
-						+ ConstantsUtils.REQUEST_PARAM_ID + "=" + eventoCreado.getId();
-
-				response.sendRedirect(urlDetalle);
-				return;
-
-			} catch (ServiceException se) {
-				logger.error("Error al crear el evento", se);
-				request.setAttribute("error", "No se pudo guardar el evento.");
-				cargarDesplegables(request);
-				request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
-				return;
-			}
-
 			// Accion = actualizar
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE.equalsIgnoreCase(action)) {
 
-			    // Hace falta una sesión iniciada.
-			    if (user == null || user.getId() == null) {
-			        response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-			        return;
-			    }
+			// Hace falta una sesión iniciada.
+			if (user == null || user.getId() == null) {
+				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
+				return;
+			}
 
-			    String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
-			    Long eventId;
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			Long eventId;
 
-			    // Comprobamos que llega un ID numérico.
-			    try {
-			        if (idStr == null || idStr.isBlank()) {
-			            response.sendError(
-			                    HttpServletResponse.SC_BAD_REQUEST,
-			                    "Falta el ID del evento."
-			            );
-			            return;
-			        }
+			// Comprobamos que llega un ID numérico.
+			try {
+				if (idStr == null || idStr.isBlank()) {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
+					return;
+				}
 
-			        eventId = Long.valueOf(idStr.trim());
+				eventId = Long.valueOf(idStr.trim());
 
-			    } catch (NumberFormatException e) {
-			        response.sendError(
-			                HttpServletResponse.SC_BAD_REQUEST,
-			                "El ID del evento no es válido."
-			        );
-			        return;
-			    }
+			} catch (NumberFormatException e) {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
+				return;
+			}
 
-			    try {
-			        // Buscamos el evento.
-			        EventDTO evento = eventService.findById(eventId);
+			try {
+				// Buscamos el evento.
+				EventDTO evento = eventService.findById(eventId);
 
-			        if (evento == null) {
-			            response.sendError(
-			                    HttpServletResponse.SC_NOT_FOUND,
-			                    "El evento no existe."
-			            );
-			            return;
-			        }
+				if (evento == null) {
+					response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
+					return;
+				}
 
-			        // Solo el creador puede abrir la vista de edición.
-			        if (evento.getCreatorUserId() == null
-			                || !user.getId().equals(evento.getCreatorUserId())) {
-			            response.sendError(
-			                    HttpServletResponse.SC_FORBIDDEN,
-			                    "No tienes permiso para editar este evento."
-			            );
-			            return;
-			        }
+				// Solo el creador puede abrir la vista de edición.
+				if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
+					response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para editar este evento.");
+					return;
+				}
 
-			        // Por ahora esta rama prepara y muestra el formulario mediante GET.
-			        if ("GET".equalsIgnoreCase(request.getMethod())) {
-			            request.setAttribute(ConstantsUtils.EVENT, evento);
-			            request.setAttribute("formatos", formatService.findAll());
-			            request.setAttribute("paises", countryService.findAll());
+				// Por ahora esta rama prepara y muestra el formulario mediante GET.
+				if ("GET".equalsIgnoreCase(request.getMethod())) {
+					request.setAttribute(ConstantsUtils.EVENT, evento);
+					request.setAttribute("formatos", formatService.findAll());
+					request.setAttribute("paises", countryService.findAll());
 
-			            List<ProvinceDTO> provincias = evento.getCountryId() == null
-			                    ? List.of()
-			                    : provinceService.findByCountry(evento.getCountryId());
+					List<ProvinceDTO> provincias = evento.getCountryId() == null ? List.of()
+							: provinceService.findByCountry(evento.getCountryId());
 
-			            List<LocalityDTO> localidades = evento.getProvinceId() == null
-			                    ? List.of()
-			                    : localityService.findByProvinceId(evento.getProvinceId());
+					List<LocalityDTO> localidades = evento.getProvinceId() == null ? List.of()
+							: localityService.findByProvinceId(evento.getProvinceId());
 
-			            request.setAttribute("provincias", provincias);
-			            request.setAttribute("localidades", localidades);
+					request.setAttribute("provincias", provincias);
+					request.setAttribute("localidades", localidades);
 
-			            request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
-			                   .forward(request, response);
-			            return;
-			        }
+					String resultadoCartel = request.getParameter("cartel");
 
-			        // En el siguiente paso añadiremos aquí el guardado por POST.
-			        if ("POST".equalsIgnoreCase(request.getMethod())) {
+					if ("ok".equals(resultadoCartel)) {
+						request.setAttribute("successMessage", "Cartel actualizado correctamente.");
+					} else if ("vacio".equals(resultadoCartel)) {
+						request.setAttribute("error", "Selecciona un archivo PNG.");
+					} else if ("invalido".equals(resultadoCartel)) {
+						request.setAttribute("error", "El archivo no es una imagen PNG válida.");
+					} else if ("error".equals(resultadoCartel)) {
+						request.setAttribute("error", "No se pudo guardar el cartel.");
+					}
 
-			            String nombre = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
-			            String formatoTexto =
-			                    request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
-			            String inicioTexto =
-			                    request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
-			            String finTexto =
-			                    request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
-			            String paisTexto =
-			                    request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
-			            String provinciaTexto =
-			                    request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
-			            String localidadTexto =
-			                    request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+					request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+					return;
+				}
 
-			            if (nombre == null || nombre.isBlank()
-			                    || formatoTexto == null || formatoTexto.isBlank()
-			                    || inicioTexto == null || inicioTexto.isBlank()
-			                    || finTexto == null || finTexto.isBlank()
-			                    || paisTexto == null || paisTexto.isBlank()) {
+				// En el siguiente paso añadiremos aquí el guardado por POST.
+				if ("POST".equalsIgnoreCase(request.getMethod())) {
 
-			                request.setAttribute("error", "Completa los campos obligatorios.");
-			                request.setAttribute(ConstantsUtils.EVENT, evento);
-			                cargarDesplegables(request);
-			                request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
-			                       .forward(request, response);
-			                return;
-			            }
+					String nombre = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
+					String formatoTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
+					String inicioTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
+					String finTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_END_DATE);
+					String paisTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
+					String provinciaTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
+					String localidadTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
 
-			            try {
-			                LocalDate fechaInicio = LocalDate.parse(inicioTexto);
-			                LocalDate fechaFin = LocalDate.parse(finTexto);
+					if (nombre == null || nombre.isBlank() || formatoTexto == null || formatoTexto.isBlank()
+							|| inicioTexto == null || inicioTexto.isBlank() || finTexto == null || finTexto.isBlank()
+							|| paisTexto == null || paisTexto.isBlank()) {
 
-			                if (fechaFin.isBefore(fechaInicio)) {
-			                    request.setAttribute(
-			                            "error",
-			                            "La fecha de fin no puede ser anterior a la de inicio."
-			                    );
-			                    request.setAttribute(ConstantsUtils.EVENT, evento);
-			                    cargarDesplegables(request);
-			                    request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
-			                           .forward(request, response);
-			                    return;
-			                }
+						request.setAttribute("error", "Completa los campos obligatorios.");
+						request.setAttribute(ConstantsUtils.EVENT, evento);
+						cargarDesplegables(request);
+						request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+						return;
+					}
 
-			                Long formatoId = Long.valueOf(formatoTexto);
-			                Long paisId = Long.valueOf(paisTexto);
+					try {
+						LocalDate fechaInicio = LocalDate.parse(inicioTexto);
+						LocalDate fechaFin = LocalDate.parse(finTexto);
 
-			                Long provinciaId = provinciaTexto == null || provinciaTexto.isBlank()
-			                        ? null
-			                        : Long.valueOf(provinciaTexto);
+						if (fechaFin.isBefore(fechaInicio)) {
+							request.setAttribute("error", "La fecha de fin no puede ser anterior a la de inicio.");
+							request.setAttribute(ConstantsUtils.EVENT, evento);
+							cargarDesplegables(request);
+							request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+							return;
+						}
 
-			                Long localidadId = localidadTexto == null || localidadTexto.isBlank()
-			                        ? null
-			                        : Long.valueOf(localidadTexto);
+						Long formatoId = Long.valueOf(formatoTexto);
+						Long paisId = Long.valueOf(paisTexto);
 
-			                Event eventoActualizado = new Event();
-			                eventoActualizado.setId(eventId);
-			                eventoActualizado.setName(nombre.trim());
-			                eventoActualizado.setStartDate(java.sql.Date.valueOf(fechaInicio));
-			                eventoActualizado.setEndDate(java.sql.Date.valueOf(fechaFin));
-			                eventoActualizado.setFormatId(formatoId);
-			                eventoActualizado.setCountryId(paisId);
-			                eventoActualizado.setProvinceId(provinciaId);
-			                eventoActualizado.setLocalityId(localidadId);
+						Long provinciaId = provinciaTexto == null || provinciaTexto.isBlank() ? null
+								: Long.valueOf(provinciaTexto);
 
-			                // Estos valores vienen del evento guardado, no del formulario.
-			                eventoActualizado.setCreatorUserId(evento.getCreatorUserId());
-			                eventoActualizado.setStatusId(evento.getStatusId());
+						Long localidadId = localidadTexto == null || localidadTexto.isBlank() ? null
+								: Long.valueOf(localidadTexto);
 
-			                boolean actualizado = eventService.update(eventoActualizado);
+						Event eventoActualizado = new Event();
+						eventoActualizado.setId(eventId);
+						eventoActualizado.setName(nombre.trim());
+						eventoActualizado.setStartDate(java.sql.Date.valueOf(fechaInicio));
+						eventoActualizado.setEndDate(java.sql.Date.valueOf(fechaFin));
+						eventoActualizado.setFormatId(formatoId);
+						eventoActualizado.setCountryId(paisId);
+						eventoActualizado.setProvinceId(provinciaId);
+						eventoActualizado.setLocalityId(localidadId);
 
-			                if (!actualizado) {
-			                    request.setAttribute("error", "No se pudieron guardar los cambios.");
-			                    request.setAttribute(ConstantsUtils.EVENT, evento);
-			                    cargarDesplegables(request);
-			                    request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
-			                           .forward(request, response);
-			                    return;
-			                }
+						// Estos valores vienen del evento guardado, no del formulario.
+						eventoActualizado.setCreatorUserId(evento.getCreatorUserId());
+						eventoActualizado.setStatusId(evento.getStatusId());
 
-			                String urlDetalle = request.getContextPath()
-			                        + ConstantsUtils.PUBLIC_EVENT_SERVLET
-			                        + "?"
-			                        + ConstantsUtils.REQUEST_PARAM_ACTION
-			                        + "="
-			                        + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL
-			                        + "&"
-			                        + ConstantsUtils.REQUEST_PARAM_ID
-			                        + "="
-			                        + eventId;
+						boolean actualizado = eventService.update(eventoActualizado);
 
-			                response.sendRedirect(urlDetalle);
-			                return;
+						if (!actualizado) {
+							request.setAttribute("error", "No se pudieron guardar los cambios.");
+							request.setAttribute(ConstantsUtils.EVENT, evento);
+							cargarDesplegables(request);
+							request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+							return;
+						}
 
-			            } catch (DateTimeParseException | NumberFormatException e) {
-			                request.setAttribute(
-			                        "error",
-			                        "Revisa las fechas y los valores seleccionados."
-			                );
-			                request.setAttribute(ConstantsUtils.EVENT, evento);
-			                cargarDesplegables(request);
-			                request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
-			                       .forward(request, response);
-			                return;
-			            }
-			        }
+						String urlDetalle = request.getContextPath() + ConstantsUtils.PUBLIC_EVENT_SERVLET + "?"
+								+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL
+								+ "&" + ConstantsUtils.REQUEST_PARAM_ID + "=" + eventId;
 
-			        // Si llega un método distinto de GET o POST, lo rechazamos.
-			        response.sendError(
-			                HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-			                "Método no permitido."
-			        );
-			        response.sendError(
-			                HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-			                "El guardado de cambios todavía no está implementado."
-			        );
+						response.sendRedirect(urlDetalle);
+						return;
 
-			    } catch (ServiceException se) {
-			        logger.error("Error al cargar la edición del evento con ID: " + eventId, se);
-			        response.sendError(
-			                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-			                "No se pudo cargar el evento para editarlo."
-			        );
-			    }
-			
+					} catch (DateTimeParseException | NumberFormatException e) {
+						request.setAttribute("error", "Revisa las fechas y los valores seleccionados.");
+						request.setAttribute(ConstantsUtils.EVENT, evento);
+						cargarDesplegables(request);
+						request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+						return;
+					}
+				}
+
+				// Si llega un método distinto de GET o POST, lo rechazamos.
+				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Método no permitido.");
+				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+						"El guardado de cambios todavía no está implementado.");
+
+			} catch (ServiceException se) {
+				logger.error("Error al cargar la edición del evento con ID: " + eventId, se);
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"No se pudo cargar el evento para editarlo.");
+			}
+
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_MY_EVENTS.equalsIgnoreCase(action)) {
 
 			// Para ver los eventos propios hace falta tener sesión iniciada.
@@ -599,83 +625,127 @@ public class PrivateEventServlet extends HttpServlet {
 			}
 		}
 
-		
-		
-		
-		
-		
 		// SUBIR CARTEL DE EVENTO
 		else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPLOAD_LINEUP.equalsIgnoreCase(action)) {
-			// Leemos los bytes de la foto desde la request usando el método leerBytes de
-			// WebUtils
-			byte[] bytesFoto = WebUtils.leerBytes(request, "imagen");
-			// si no selecciona nada, enviamos un mensaje de información y volvemos a la
-			// página de evento detalle
-			if (bytesFoto == null || bytesFoto.length == 0) {
-				cargarDesplegables(request);
-				logger.info("No se seleccionó ninguna foto");
-				request.setAttribute("error", "No se seleccionó ninguna foto.");
-				request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
+
+			if (!"POST".equalsIgnoreCase(request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "La subida del cartel requiere POST.");
 				return;
 			}
-			try {
-		        // Guardamos la foto en el servicio de contenido
-		        ContentData c = new ContentData();
-		        ContentMetadata cm = new ContentMetadata();
-		        cm.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
-		     //   cm.setEntityId(event.getId().toString()); // El ID del evento
-		        cm.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE);
-		        cm.setFormat(".png"); // TODO: extraer la extensión real en el futuro si lo necesitas
-		        
-		        c.setMetadata(cm);
-		        c.setRaw(bytesFoto);
-		        contentService.save(c);
-		        
-		        SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, user);
-		        
-		        logger.info("Foto del evento guardada correctamente para el usuario: " + user.getId());
-		        request.setAttribute("successMessage", "Foto de evento actualizada con éxito."); // Mensaje de éxito successMessage
 
-		    } catch (ServiceException se) {
-		        logger.error("Error en el servicio al guardar la foto de evento para el usuario: " + user.getId(), se);
-		        request.setAttribute("error", "Error al guardar la foto de evento: " + se.getMessage());
-		    } catch (Exception e) {
-		        logger.error("Error inesperado al procesar la foto de evento para el usuario: " + user.getId(), e);
-		        request.setAttribute("error", "Error inesperado al procesar la imagen.");
-		    }		
-			
-			request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
-			
-		}
-		
-		
-		
-		
-		
-		
-		// ACCION MOSTRAR IMAGEN DE EVENTO 
-		else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP.equalsIgnoreCase(action)) {
-			// primero creamos un objeto ContentMetadata con los metadatos de la imagen de usuario 
+			if (user == null || user.getId() == null) {
+				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
+				return;
+			}
+
+			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+			Long eventId;
+
+			try {
+				if (idStr == null || idStr.isBlank()) {
+					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
+					return;
+				}
+
+				eventId = Long.valueOf(idStr.trim());
+			} catch (NumberFormatException e) {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
+				return;
+			}
+
+			EventDTO evento;
+
+			try {
+				evento = eventService.findById(eventId);
+			} catch (ServiceException e) {
+				logger.error("No se pudo cargar el evento " + eventId, e);
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudo cargar el evento.");
+				return;
+			}
+
+			if (evento == null) {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
+				return;
+			}
+
+			if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"No tienes permiso para cambiar el cartel de este evento.");
+				return;
+			}
+
+			byte[] bytesCartel;
+
+			try {
+				bytesCartel = WebUtils.leerBytes(request, "imagen");
+			} catch (ServletException e) {
+				logger.warn("La petición multipart del cartel no es válida.", e);
+				volverAEditarCartel(request, response, eventId, "invalido");
+				return;
+			}
+
+			if (bytesCartel == null || bytesCartel.length == 0) {
+				volverAEditarCartel(request, response, eventId, "vacio");
+				return;
+			}
+
+			try (ByteArrayInputStream entrada = new ByteArrayInputStream(bytesCartel)) {
+				if (ImageIO.read(entrada) == null) {
+					volverAEditarCartel(request, response, eventId, "invalido");
+					return;
+				}
+			} catch (IOException e) {
+				logger.warn("No se pudo leer la imagen del cartel.", e);
+				volverAEditarCartel(request, response, eventId, "invalido");
+				return;
+			}
+
 			ContentMetadata metadata = new ContentMetadata();
 			metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
-		//	metadata.setEntityId(event.getId().toString());
+			metadata.setEntityId(eventId.toString());
 			metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE);
 			metadata.setFormat(".png");
-			
-			try {
-			    ContentData foto = contentService.get(metadata); 
-			    byte[] bytes = foto.getRaw(); // 
 
-			    response.setContentType("image/png");
-			    response.getOutputStream().write(bytes);
-			    response.getOutputStream().flush();
-			    
+			ContentData cartel = new ContentData();
+			cartel.setMetadata(metadata);
+			cartel.setRaw(bytesCartel);
+
+			try {
+				contentService.save(cartel);
+				logger.info("Cartel guardado para el evento " + eventId);
+				volverAEditarCartel(request, response, eventId, "ok");
+			} catch (ServiceException e) {
+				logger.error("Error al guardar el cartel del evento " + eventId, e);
+				volverAEditarCartel(request, response, eventId, "error");
+			}
+
+			return;
+		}
+
+		// ACCION MOSTRAR IMAGEN DE EVENTO
+		else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP.equalsIgnoreCase(action)) {
+			// primero creamos un objeto ContentMetadata con los metadatos de la imagen de
+			// usuario
+			ContentMetadata metadata = new ContentMetadata();
+			metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
+			// metadata.setEntityId(event.getId().toString());
+			metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE);
+			metadata.setFormat(".png");
+
+			try {
+				ContentData foto = contentService.get(metadata);
+				byte[] bytes = foto.getRaw(); //
+
+				response.setContentType("image/png");
+				response.getOutputStream().write(bytes);
+				response.getOutputStream().flush();
+
 			} catch (ContentException ce) {
 				logger.error("Error al obtener la foto de evento " + ce);
-			    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			}
-			return;		
-		
+			return;
+
 		}
 	}
 
