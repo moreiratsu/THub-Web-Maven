@@ -264,3 +264,43 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+
+
+
+// SCRIPT para la ventanita de borrado de evento --------------------------------------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", function () {
+    const dialogoBorrado = document.getElementById("confirmacionBorrado");
+    const botonAbrir = document.getElementById("abrirConfirmacionBorrado");
+    const botonCancelar = document.getElementById("cancelarBorrado");
+
+    // Esta página no tiene la ventana de borrado: no hacemos nada.
+    if (!dialogoBorrado || !botonAbrir || !botonCancelar) {
+        return;
+    }
+
+    botonAbrir.addEventListener("click", function () {
+        dialogoBorrado.showModal();
+    });
+
+    botonCancelar.addEventListener("click", function () {
+        dialogoBorrado.close();
+    });
+});
+
+
+
+// SCRIPT para la PAGINACION
+document.addEventListener("DOMContentLoaded", function () {
+    const botonesPagina =
+        document.querySelectorAll(".pagination-button[data-pagina]");
+
+    botonesPagina.forEach(function (boton) {
+        boton.addEventListener("click", function () {
+            const url = new URL(window.location.href);
+
+            url.searchParams.set("pagina", boton.dataset.pagina);
+
+            window.location.href = url.toString();
+        });
+    });
+});

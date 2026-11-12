@@ -2,7 +2,6 @@
 	pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.EventDTO"%>
 <%@ page import="com.alvaro.thub.utils.ConstantsUtils"%>
-
 <%@ include file="/html/common/header.jsp"%>
 <%@ include file="/html/common/topbar.jsp"%>
 
@@ -39,60 +38,60 @@ if (event != null) {
 %>
 
 		<div class="card event-detail-card">
-		<div class="event-detail-grid">
-		
-		<!-- parte izquierda con los datos del evento -->
-		<section class="event-detail-info">
-			<h2 class="event-detail-title">
-				<%=event.getName() != null ? event.getName() : "Evento sin nombre"%>
-			</h2>
-			<p>
-				<strong>Estado:</strong> <span
-					class="status-badge <%=claseEstado%>"> <%=event.getStatusName() != null ? event.getStatusName() : "Sin estado"%>
-				</span>
-			</p>
+			<div class="event-detail-grid">
 
-			<p>
-				<strong>Formato:</strong>
-				<%=event.getFormatName() != null ? event.getFormatName() : "-"%>
-			</p>
+				<!-- parte izquierda con los datos del evento -->
+				<section class="event-detail-info">
+					<h2 class="event-detail-title">
+						<%=event.getName() != null ? event.getName() : "Evento sin nombre"%>
+					</h2>
+					<p>
+						<strong>Estado:</strong> <span
+							class="status-badge <%=claseEstado%>"> <%=event.getStatusName() != null ? event.getStatusName() : "Sin estado"%>
+						</span>
+					</p>
 
-			<p>
-				<strong>Fecha de inicio:</strong>
-				<%=event.getStartDate() != null ? event.getStartDate() : "-"%>
-			</p>
+					<p>
+						<strong>Formato:</strong>
+						<%=event.getFormatName() != null ? event.getFormatName() : "-"%>
+					</p>
 
-			<p>
-				<strong>Fecha de fin:</strong>
-				<%=event.getEndDate() != null ? event.getEndDate() : "-"%>
-			</p>
+					<p>
+						<strong>Fecha de inicio:</strong>
+						<%=event.getStartDate() != null ? event.getStartDate() : "-"%>
+					</p>
 
-			<p>
-				<strong>Localidad:</strong>
-				<%=event.getLocalityName() != null ? event.getLocalityName() : "-"%>
-			</p>
+					<p>
+						<strong>Fecha de fin:</strong>
+						<%=event.getEndDate() != null ? event.getEndDate() : "-"%>
+					</p>
 
-			<p>
-				<strong>Provincia:</strong>
-				<%=event.getProvinceName() != null ? event.getProvinceName() : "-"%>
-			</p>
+					<p>
+						<strong>Localidad:</strong>
+						<%=event.getLocalityName() != null ? event.getLocalityName() : "-"%>
+					</p>
 
-			<p>
-				<strong>País:</strong>
-				<%=event.getCountryName() != null ? event.getCountryName() : "-"%>
-			</p>
-			</section>
-			
-			<div class="event-poster-panel">
-            <img class="event-poster"
-                 src="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
-                 alt="Cartel de <%= event.getName() %>"
-                 onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/img/event_poster.jpg';">
-        </div>
-</div>
+					<p>
+						<strong>Provincia:</strong>
+						<%=event.getProvinceName() != null ? event.getProvinceName() : "-"%>
+					</p>
 
-<!-- BLOQUE PARA QUE APAREZCAN LOS BOTONES DE ELIMINAR O EDITAR SI ERES EL CREADOR DE ESE EVENTO -->
-<%
+					<p>
+						<strong>País:</strong>
+						<%=event.getCountryName() != null ? event.getCountryName() : "-"%>
+					</p>
+				</section>
+
+				<div class="event-poster-panel">
+					<img class="event-poster"
+						src="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
+						alt="Cartel de <%= event.getName() %>"
+						onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/img/event_poster.jpg';">
+				</div>
+			</div>
+
+			<!-- BLOQUE PARA QUE APAREZCAN LOS BOTONES DE ELIMINAR O EDITAR SI ERES EL CREADOR DE ESE EVENTO -->
+			<%
 boolean esCreador = usuario != null
         && usuario.getId() != null
         && event.getCreatorUserId() != null
@@ -100,45 +99,64 @@ boolean esCreador = usuario != null
 
 if (esCreador) {
 %>
-    <div class="actions-wrapper event-detail-actions">
+			<div class="actions-wrapper event-detail-actions">
 
-        <!-- Botón para editar -->
-        <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
-           title="Editar evento"
-           aria-label="Editar evento"
-           class="action-btn action-edit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+				<!-- Botón para editar -->
+				<a
+					href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
+					title="Editar evento" aria-label="Editar evento"
+					class="action-btn action-edit"> <svg viewBox="0 0 24 24"
+						fill="none" stroke="currentColor" stroke-width="2">
+                <path
+							d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path
+							d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
-        </a>
+				</a>
 
-        <!-- Botón para borrar -->
-        <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_DELETE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
-           title="Borrar evento"
-           aria-label="Borrar evento"
-           class="action-btn action-delete"
-           onclick="return confirm('¿Seguro que deseas borrar este evento?');">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2">
+				<!-- Botón para borrar -->
+				<button type="button" id="abrirConfirmacionBorrado"
+					title="Borrar evento" aria-label="Borrar evento"
+					class="action-btn action-delete">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="2">
                 <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <path
+							d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
-        </a>
+				</button>
+				
+				<dialog id="confirmacionBorrado">
+				<h2>¿Eliminar este evento?</h2>
+				<p>Esta acción no se puede deshacer.</p>
 
-    </div>
-    
-    <!-- ------------------------------------------------------------------------------------------- -->
-    
-<%
+				<button type="button" id="cancelarBorrado">Cancelar</button>
+
+				<form
+					action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>"
+					method="post">
+
+					<input type="hidden"
+						name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>"
+						value="<%= ConstantsUtils.REQUEST_EVENT_ACTION_DELETE %>">
+
+					<input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ID %>"
+						value="<%= event.getId() %>">
+
+					<button type="submit">Sí, borrar evento</button>
+				</form>
+				</dialog>
+			</div>
+
+			<!-- ------------------------------------------------------------------------------------------- -->
+
+			<%
 }
 %>
-<a class="btn-primary"
-   href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
-    Volver a la búsqueda
-</a>
-</div>
+			<a class="btn-primary"
+				href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
+				Volver a la búsqueda </a>
+		</div>
 		<%
 		}
 		%>

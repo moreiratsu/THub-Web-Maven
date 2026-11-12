@@ -22,3 +22,9 @@ LISTA DE COSAS PENDIENTES:
  añadir mas campos al formulario de creacion de evento deporte, instalación, precio, participantes y descripción
  
 cambiar la forma de calcular los estados del inicio y fin de un evento, de forma que el usuario crador del mismotenga dos bpotones uno para iniciar el evento y otro para finzalizarlo a cancelarlo, el estado guardara esa informacion.
+
+PONER LA PAPELERA DE LA LISTA DE EVENTOS FUNCIONANDO COMO LA DE DETALLE DE EVENTO
+
+PONER FIJA EL ASIDEBAR
+
+PONER QUE SI HAY UN USUARIO LOGUEADO LE APAREZCA EN EL ASIDEBAR DENTRO DE EVENTOS LA OPCION DE MIS EVENTOS

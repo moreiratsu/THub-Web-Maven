@@ -281,41 +281,10 @@ public class PrivateEventServlet extends HttpServlet {
 					try (InputStream entrada = parteCartel.getInputStream()) { // leemos el archivo
 						bytesCartel = entrada.readAllBytes(); // le damos al array de bytes lo que lee inputstream
 					}
-					formatoCartel = WebUtils.validarImagen(parteCartel.getSubmittedFileName(), bytesCartel); // aqui
-																												// para
-																												// validar
-																												// la
-																												// imagen
-																												// y el
-																												// formato
-																												// uso
-																												// el
-																												// metodo
-																												// que
-																												// implemente
-																												// enwebutils,
-																												// que
-																												// recibe
-																												// el
-																												// nombre
-																												// del
-																												// archivo
-																												// y el
-																												// array
-																												// de
-																												// bytes,
-																												// getsubmitedfilename
-																												// es un
-																												// metodo
-																												// de la
-																												// clase
-																												// Part
-																												// que
-																												// nos
-																												// da el
-																												// nombre
-																												// de un
-																												// archivo
+					// Para validar la imagen y el formato uso el método que implementé en WebUtils, 
+					// que recibe el nombre del archivo y el array de bytes. getSubmittedFileName() 
+					// es un método de la clase Part que nos da el nombre de un archivo.
+					formatoCartel = WebUtils.validarImagen(parteCartel.getSubmittedFileName(), bytesCartel); 
 					if (formatoCartel == null) {
 						volverAlFormularioConError(request, response,
 								"El archivo debe ser una imagen PNG, JPG o JPEG válida.");
@@ -370,20 +339,24 @@ public class PrivateEventServlet extends HttpServlet {
 				return;
 			}
 
+			
+			
+			
+			
 			// ACCION = ELIMINAR un evento
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
 
-			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
-
-			// Comprobamos que la URL incluye un ID numérico válido.
-			Long eventId;
+			String idUrlString = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID); // obtenemos el id del evento de la peticion (viene como STRING)
+			Long eventId = null; // el verdadero ID tipo long de momento lo pongo como null
+			
+			// Comprobamos si el string tiene valor
 			try {
-				if (idStr == null || idStr.isBlank()) {
+				if (idUrlString == null || idUrlString.isBlank()) {
 					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
 					return;
 				}
-
-				eventId = Long.valueOf(idStr.trim());
+				//convertimos el string a Long y ya tenemos el id del evento a eliminar
+				eventId = Long.valueOf(idUrlString.trim());
 
 			} catch (NumberFormatException e) {
 				logger.error("El ID no es válido : " + e);
@@ -391,8 +364,8 @@ public class PrivateEventServlet extends HttpServlet {
 				return;
 			}
 
-			try {
-				// Buscamos el evento para saber quién lo creó.
+			// Buscamos el evento para saber quién lo creó.
+			try {	
 				EventDTO evento = eventService.findById(eventId);
 
 				if (evento == null) {
@@ -407,24 +380,31 @@ public class PrivateEventServlet extends HttpServlet {
 				}
 
 				// Solo llegamos aquí si el usuario es el creador.
-				boolean eliminado = eventService.delete(eventId);
+				boolean eliminado = eventService.delete(eventId); // ya tenemos el id del evento y somos el usuario con permido de borrar solo queda llamar al servicio
 
 				if (!eliminado) {
 					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudo borrar el evento.");
 					return;
 				}
+				
+				// si lo elimina lo redirigimos a a lista de eventos (aqui no se hace forward porque si hiciera un forward y f5 volveria a cargar la url del borrado pero ya no hay un evento con ese id entoces me daria el error 404)
 
-				Results<EventDTO> results = eventService.findBy(new EventCriteria(), 1, Integer.MAX_VALUE);
-
-				request.setAttribute("results", results);
-				request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
+				response.sendRedirect(response.encodeRedirectURL(request.getContextPath()
+				        + ConstantsUtils.PUBLIC_EVENT_SERVLET
+				        + "?"
+				        + ConstantsUtils.REQUEST_PARAM_ACTION
+				        + "="
+				        + ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH));
+				return;
 
 			} catch (ServiceException se) {
 				logger.error("Error al eliminar el evento con ID: " + eventId, se);
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						"Se produjo un error al borrar el evento.");
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Se produjo un error al borrar el evento.");
 			}
-
+			
+			
+			
+			
 			// Accion = actualizar
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE.equalsIgnoreCase(action)) {
 

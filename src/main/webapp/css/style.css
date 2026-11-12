@@ -1710,3 +1710,122 @@ input[type="date"] {
 #eventCreateForm > .event-create-actions .btn-primary {
     padding: 10px 28px;
 }
+
+#confirmacionBorrado {
+    width: min(420px, calc(100% - 32px));
+    padding: 28px;
+    border: 1px solid #444;
+    border-radius: 14px;
+    background: #151515;
+    color: #fff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+#confirmacionBorrado::backdrop {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(3px);
+}
+
+#confirmacionBorrado h2 {
+    margin: 0 0 12px;
+    color: #e0ad3b;
+    font-size: 1.4rem;
+}
+
+#confirmacionBorrado p {
+    margin: 0 0 24px;
+    color: #d0d0d0;
+    line-height: 1.5;
+}
+
+#confirmacionBorrado > button,
+#confirmacionBorrado form button {
+    padding: 10px 16px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
+}
+
+#confirmacionBorrado > button {
+    background: #252525;
+    color: #fff;
+}
+
+#confirmacionBorrado form {
+    display: inline;
+}
+
+#confirmacionBorrado form button {
+    border-color: #b52d25;
+    background: #b52d25;
+    color: #fff;
+}
+
+#confirmacionBorrado > button:hover {
+    background: #353535;
+}
+
+#confirmacionBorrado form button:hover {
+    background: #92231d;
+}
+
+/* Centrar la ventana de confirmación en la pantalla */
+#confirmacionBorrado {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+}
+
+/* Mantener oscuro el botón de la papelera */
+button.action-btn.action-delete {
+    appearance: none;
+    -webkit-appearance: none;
+    background: #151515;
+    color: rgb(255, 89, 89);
+    border: none;
+    cursor: pointer;
+}
+
+/* Conservar el color de la papelera al pasar el ratón */
+button.action-btn.action-delete:hover {
+    background:none;
+}
+
+
+.pagination-wrapper {
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-wrapper span {
+    min-width: 70px;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.pagination-button {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease,
+                background-color 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+.pagination-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

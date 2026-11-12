@@ -198,14 +198,39 @@ public class PublicEventServlet extends HttpServlet {
 					logger.error("Error al parsear la fecha...", e);
 				}
 			}
-			// 3. Llamamos al servicio para buscar los eventos que cumplan con los criterios
-			// 4. Guardamos los resultados en una lista se los asignamos a la request
-			// y los pasamos al JSP de resultados de búsqueda
+			
+			
+			// paginacion de los resultados
 			try {
-				Results<EventDTO> results = eventService.findBy(criteria, 1, Integer.MAX_VALUE);
+				int tamanoPagina = 10;
+				int paginaActual = 1;
+				String paginaTexto = request.getParameter("pagina");
+
+				if (paginaTexto != null && !paginaTexto.isBlank()) {
+				    try {
+				        paginaActual = Integer.parseInt(paginaTexto);
+
+				        if (paginaActual < 1) {
+				            paginaActual = 1;
+				        }
+				    } catch (NumberFormatException e) {
+				        paginaActual = 1;
+				    }
+				}
+				// El DAO espera la fila inicial, empezando en 1.
+				// Página 1 empieza en la fila 1; página 2, en la 26; página 3, en la 51.
+				int primeraFila = (paginaActual - 1) * tamanoPagina + 1;
+
+				Results<EventDTO> results =
+				        eventService.findBy(criteria, primeraFila, tamanoPagina);
+
+				int totalPaginas =
+				        (results.getTotal() + tamanoPagina - 1) / tamanoPagina;
 
 				request.setAttribute("results", results);
-
+				request.setAttribute("paginaActual", paginaActual);
+				request.setAttribute("totalPaginas", totalPaginas);
+				
 			} catch (ServiceException se) {
 				logger.error("Error al buscar eventos: ", se);
 				request.setAttribute("error", "Error al realizar la búsqueda de eventos.");

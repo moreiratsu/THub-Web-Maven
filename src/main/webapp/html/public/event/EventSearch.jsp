@@ -24,7 +24,7 @@
 
 
 		<%
-
+		// recupero los datos del formulario para pintarlos en la jsp
 		List<Country> paises = (List<Country>) request.getAttribute("paises");
 
 		List<ProvinceDTO> provincias = (List<ProvinceDTO>) request.getAttribute("provincias");
@@ -42,6 +42,14 @@
 		List<Format> formatos = (List<Format>) request.getAttribute("formatos");
 
 		List<UserDTO> organizadores = (List<UserDTO>) request.getAttribute("organizadores");
+
+		// paginacion
+		Integer paginaActualRecibida = (Integer) request.getAttribute("paginaActual");
+
+		Integer totalPaginasRecibido = (Integer) request.getAttribute("totalPaginas");
+
+		int paginaActual = paginaActualRecibida == null ? 1 : paginaActualRecibida;
+		int totalPaginas = totalPaginasRecibido == null ? 0 : totalPaginasRecibido;
 		%>
 
 		<!-- Encabezado de Sección y Botón Crear Evento -->
@@ -357,7 +365,26 @@
 
 			<!-- Paginación -->
 			<div class="pagination-wrapper">
-				<span>&lt;&lt; &lt; 1 de 10 &gt; &gt;&gt;</span>
+				<% if (totalPaginas > 0) { %>
+				<button type="button" class="pagination-button" data-pagina="1"
+					<%= paginaActual <= 1 ? "disabled" : "" %>>&laquo;</button>
+
+				<button type="button" class="pagination-button"
+					data-pagina="<%= paginaActual - 1 %>"
+					<%= paginaActual <= 1 ? "disabled" : "" %>>&lsaquo;</button>
+
+				<span><%= paginaActual %> de <%= totalPaginas %></span>
+
+				<button type="button" class="pagination-button"
+					data-pagina="<%= paginaActual + 1 %>"
+					<%= paginaActual >= totalPaginas ? "disabled" : "" %>>
+					&rsaquo;</button>
+
+				<button type="button" class="pagination-button"
+					data-pagina="<%= totalPaginas %>"
+					<%= paginaActual >= totalPaginas ? "disabled" : "" %>>
+					&raquo;</button>
+				<% } %>
 			</div>
 		</div>
 
