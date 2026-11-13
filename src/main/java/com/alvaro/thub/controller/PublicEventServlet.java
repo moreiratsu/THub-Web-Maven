@@ -130,11 +130,10 @@ public class PublicEventServlet extends HttpServlet {
 		}
 		switch (action) {
 
-		// Accion = mostrar la vista de busqueda y cargar los combobox
+		// Accion = mostrar la vista de busqueda con resultados
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH:
-			cargarDesplegables(request);
-			request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
-			break;
+		    response.sendRedirect(response.encodeRedirectURL(request.getContextPath()+ ConstantsUtils.PUBLIC_EVENT_SERVLET+ "?"+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH));
+		    return;
 
 		// Accion = "search"
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH:
