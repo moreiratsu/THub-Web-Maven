@@ -85,6 +85,7 @@ public final class ConstantsUtils {
     public static final String REQUEST_PARAM_END_DATE = "endDate";
     public static final String REQUEST_PARAM_USER_ID = "userId";
     public static final String REQUEST_PARAM_CARTEL = "cartel";
+    public static final String REQUEST_PARAM_NEW_STATUS = "newStatus";
     
     /* ------------------------------------------------------------------------------
      * ACCIONES DE LOS SERVLETS 
@@ -96,11 +97,12 @@ public final class ConstantsUtils {
 	public static final String REQUEST_EVENT_ACTION_DELETE = "delete";
 	public static final String REQUEST_EVENT_ACTION_CREATE = "create";
 	public static final String REQUEST_EVENT_ACTION_UPDATE = "update";
-	public static final String REQUEST_EVENT_ACTION_UPLOAD_LINEUP = "uploadLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
 	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_CREATE = "showCreate";
 	public static final String REQUEST_EVENT_ACTION_SHOW_MY_EVENTS = "showMyEvents";
+	public static final String REQUEST_EVENT_ACTION_CHANGE_STATUS = "changeStatus";
+
 
 	
 	/* ------------------------------------------------------------------------------------

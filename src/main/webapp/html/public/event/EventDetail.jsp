@@ -163,7 +163,65 @@ if (esCreador) {
 			</div>
 
 			<!-- ------------------------------------------------------------------------------------------- -->
+			<% if ("programado".equals(nombreEstado)) { %>
 
+    <form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>"
+          method="post"
+          class="event-status-form">
+
+        <input type="hidden"
+               name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>"
+               value="<%= ConstantsUtils.REQUEST_EVENT_ACTION_CHANGE_STATUS %>">
+
+        <input type="hidden"
+               name="<%= ConstantsUtils.REQUEST_PARAM_ID %>"
+               value="<%= event.getId() %>">
+
+        <button type="submit"
+                name="<%= ConstantsUtils.REQUEST_PARAM_NEW_STATUS %>"
+                value="<%= ConstantsUtils.ESTADO_EN_CURSO %>"
+                class="btn-primary btn-status-start">
+            Iniciar evento
+        </button>
+
+        <button type="submit"
+                name="<%= ConstantsUtils.REQUEST_PARAM_NEW_STATUS %>"
+                value="<%= ConstantsUtils.ESTADO_CANCELADO %>"
+                class="btn-primary btn-status-cancel">
+            Cancelar evento
+        </button>
+    </form>
+
+<% } else if ("en curso".equals(nombreEstado)) { %>
+
+    <form action="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>"
+          method="post"
+          class="event-status-form">
+
+        <input type="hidden"
+               name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>"
+               value="<%= ConstantsUtils.REQUEST_EVENT_ACTION_CHANGE_STATUS %>">
+
+        <input type="hidden"
+               name="<%= ConstantsUtils.REQUEST_PARAM_ID %>"
+               value="<%= event.getId() %>">
+
+        <button type="submit"
+                name="<%= ConstantsUtils.REQUEST_PARAM_NEW_STATUS %>"
+                value="<%= ConstantsUtils.ESTADO_FINALIZADO %>"
+                class="btn-primary btn-status-finish">
+            Finalizar evento
+        </button>
+
+        <button type="submit"
+                name="<%= ConstantsUtils.REQUEST_PARAM_NEW_STATUS %>"
+                value="<%= ConstantsUtils.ESTADO_CANCELADO %>"
+                class="btn-primary btn-status-cancel">
+            Cancelar evento
+        </button>
+    </form>
+
+<% } %>
 			<%
 }
 %>

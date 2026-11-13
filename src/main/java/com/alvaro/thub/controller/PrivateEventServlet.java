@@ -689,8 +689,143 @@ public class PrivateEventServlet extends HttpServlet {
 				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudieron cargar tus eventos.");
 				return;
 			}
-		}
+		
+			
+			
+			
+		// Acción = cambiar el estado del evento.
+		}else if (ConstantsUtils.REQUEST_EVENT_ACTION_CHANGE_STATUS.equalsIgnoreCase(action)) {
 
+	    // Esta acción solo acepta POST.
+	    if (!"POST".equalsIgnoreCase(request.getMethod())) {
+	        response.sendError(
+	                HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+	                "El cambio de estado requiere POST."
+	        );
+	        return;
+	    }
+
+	    // Leemos y validamos el ID del evento.
+	    String idTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+
+	    Long eventId;
+
+	    try {
+	        if (idTexto == null || idTexto.isBlank()) {
+	            response.sendError(HttpServletResponse.SC_BAD_REQUEST,"Falta el ID del evento.");
+	            return;
+	        }
+
+	        eventId = Long.valueOf(idTexto.trim());
+
+	    } catch (NumberFormatException e) {
+	        response.sendError(HttpServletResponse.SC_BAD_REQUEST,"El ID del evento no es válido.");
+	        return;
+	    }
+
+	    try {
+	        EventDTO evento = eventService.findById(eventId);
+
+	        if (evento == null) {
+	            response.sendError(HttpServletResponse.SC_NOT_FOUND,"El evento no existe.");
+	            return;
+	        }
+
+	        // Solo el organizador del evento puede cambiar su estado.
+	        if (evento.getCreatorUserId() == null
+	                || !user.getId().equals(evento.getCreatorUserId())) {
+	            response.sendError(
+	                    HttpServletResponse.SC_FORBIDDEN,
+	                    "No tienes permiso para cambiar el estado de este evento."
+	            );
+	            return;
+	        }
+	        
+	        // ahora que ya tengo el evento puedo obtener su estado
+	        String estadoActual = evento.getStatusName();
+	        String estadoSolicitado =
+	                request.getParameter(ConstantsUtils.REQUEST_PARAM_NEW_STATUS); // y leo de la peticion el nuevo estado
+
+	        if (estadoSolicitado != null) {
+	            estadoSolicitado = estadoSolicitado.trim();
+	        }
+
+	        boolean estaProgramado =
+	                ConstantsUtils.ESTADO_PROGRAMADO.equalsIgnoreCase(estadoActual);
+
+	        boolean estaEnCurso =
+	                ConstantsUtils.ESTADO_EN_CURSO.equalsIgnoreCase(estadoActual);
+
+	        boolean quiereIniciar =
+	                ConstantsUtils.ESTADO_EN_CURSO.equalsIgnoreCase(estadoSolicitado);
+
+	        boolean quiereCancelar =
+	                ConstantsUtils.ESTADO_CANCELADO.equalsIgnoreCase(estadoSolicitado);
+
+	        boolean quiereFinalizar =
+	                ConstantsUtils.ESTADO_FINALIZADO.equalsIgnoreCase(estadoSolicitado);
+
+	        boolean cambioPermitido =
+	                (estaProgramado && (quiereIniciar || quiereCancelar))
+	                || (estaEnCurso && (quiereCancelar || quiereFinalizar));
+
+	        if (!cambioPermitido) {
+	            response.sendError(
+	                    HttpServletResponse.SC_CONFLICT,
+	                    "Ese cambio de estado no está permitido."
+	            );
+	            return;
+	        }
+
+	        List<Status> estados = statusService.findByName(estadoSolicitado);
+
+	        if (estados == null || estados.isEmpty()
+	                || estados.get(0).getId() == null) {
+	            response.sendError(
+	                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+	                    "No se encontró el estado solicitado."
+	            );
+	            return;
+	        }
+
+	        boolean actualizado =
+	                eventService.updateStatus(eventId, estados.get(0).getId());
+
+	        if (!actualizado) {
+	            response.sendError(
+	                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+	                    "No se pudo actualizar el estado."
+	            );
+	            return;
+	        }
+
+	        String urlDetalle = request.getContextPath()
+	                + ConstantsUtils.PUBLIC_EVENT_SERVLET
+	                + "?"
+	                + ConstantsUtils.REQUEST_PARAM_ACTION
+	                + "="
+	                + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL
+	                + "&"
+	                + ConstantsUtils.REQUEST_PARAM_ID
+	                + "="
+	                + eventId;
+
+	        response.sendRedirect(response.encodeRedirectURL(urlDetalle));
+	        return;
+
+	    } catch (ServiceException se) {
+	        logger.error(
+	                "Error al cambiar el estado del evento con ID: " + eventId,
+	                se
+	        );
+	        response.sendError(
+	                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+	                "Se produjo un error al cambiar el estado."
+	        );
+	        return;
+	    }
+		
+		}
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
