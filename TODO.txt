@@ -23,6 +23,7 @@ LISTA DE COSAS PENDIENTES:
  
 cambiar la forma de calcular los estados del inicio y fin de un evento, de forma que el usuario crador del mismotenga dos bpotones uno para iniciar el evento y otro para finzalizarlo a cancelarlo, el estado guardara esa informacion.
 
-PONER LA PAPELERA DE LA LISTA DE EVENTOS FUNCIONANDO COMO LA DE DETALLE DE EVENTO
+- En el futuro molaría que cuando un Organizador cambie el Estado de un Evento, le mande un correo avisando a todos los Participantes que tenga asociados.
 
+-Poner filtros de orden en la búsqueda. Poder filtrar por orden alfabetico, numerico (ids), fechas proximas.
 

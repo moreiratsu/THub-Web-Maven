@@ -94,7 +94,7 @@ String urlEventos = request.getContextPath()
                            accept=".png"
                            aria-describedby="imageHelp">
 
-                    <small id="imageHelp">Formato permitido: PNG.</small>
+                    <small id="imageHelp">Formatos permitidos: PNG, JPG Y JPEG.</small>
 
                     <img id="posterPreview"
                          class="event-poster-preview"

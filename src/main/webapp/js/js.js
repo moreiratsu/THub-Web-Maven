@@ -269,21 +269,37 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // SCRIPT para la ventanita de borrado de evento --------------------------------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", function () {
-    const dialogoBorrado = document.getElementById("confirmacionBorrado");
-    const botonAbrir = document.getElementById("abrirConfirmacionBorrado");
+    const dialogo = document.getElementById("confirmacionBorrado");
     const botonCancelar = document.getElementById("cancelarBorrado");
+    const campoIdEvento = document.getElementById("idEventoBorrar");
 
-    // Esta página no tiene la ventana de borrado: no hacemos nada.
-    if (!dialogoBorrado || !botonAbrir || !botonCancelar) {
+    if (!dialogo || !botonCancelar) {
         return;
     }
 
-    botonAbrir.addEventListener("click", function () {
-        dialogoBorrado.showModal();
+    // Botones de borrar de las filas de búsqueda
+    const botonesDeLaLista =
+        document.querySelectorAll(".js-abrir-borrado");
+
+    botonesDeLaLista.forEach(function (boton) {
+        boton.addEventListener("click", function () {
+            campoIdEvento.value = boton.dataset.eventId;
+            dialogo.showModal();
+        });
     });
 
+    // Botón de borrar de EventDetail.jsp
+    const botonDetalle =
+        document.getElementById("abrirConfirmacionBorrado");
+
+    if (botonDetalle) {
+        botonDetalle.addEventListener("click", function () {
+            dialogo.showModal();
+        });
+    }
+
     botonCancelar.addEventListener("click", function () {
-        dialogoBorrado.close();
+        dialogo.close();
     });
 });
 

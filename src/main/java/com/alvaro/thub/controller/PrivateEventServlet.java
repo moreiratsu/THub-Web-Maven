@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import jakarta.servlet.annotation.MultipartConfig;
 
+import com.alvaro.thub.dao.DataException;
 import com.alvaro.thub.dao.criteria.EventCriteria;
 import com.alvaro.thub.model.ContentData;
 import com.alvaro.thub.model.ContentException;
@@ -92,15 +93,6 @@ public class PrivateEventServlet extends HttpServlet {
 
 	}
 
-	private void volverAEditarCartel(HttpServletRequest request, HttpServletResponse response, Long eventId,
-			String resultado) throws IOException {
-
-		String destino = request.getContextPath() + ConstantsUtils.PRIVATE_EVENT_SERVLET + "?"
-				+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE + "&"
-				+ ConstantsUtils.REQUEST_PARAM_ID + "=" + eventId + "&cartel=" + resultado;
-
-		response.sendRedirect(response.encodeRedirectURL(destino));
-	}
 
 	// Método para llenar los combox con los datos de la base de datos
 	private void cargarDesplegables(HttpServletRequest request) {
@@ -373,7 +365,7 @@ public class PrivateEventServlet extends HttpServlet {
 					return;
 				}
 
-				// El creador del evento debe ser el usuario de la sesión.
+				// Solo el creador del evento puede borrar sus eventos
 				if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
 					response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para borrar este evento.");
 					return;
@@ -405,14 +397,11 @@ public class PrivateEventServlet extends HttpServlet {
 			
 			
 			
-			// Accion = actualizar
+			// Accion = EDITAR/ACTUALIZAR un evento 
+			//(en esta accion voy a probar a hacer dos cosas en la misma accion,
+			//con get muestro los datos actuales y con POST guardo los cambios)
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE.equalsIgnoreCase(action)) {
 
-			// Hace falta una sesión iniciada.
-			if (user == null || user.getId() == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-				return;
-			}
 
 			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 			Long eventId;
@@ -423,7 +412,8 @@ public class PrivateEventServlet extends HttpServlet {
 					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
 					return;
 				}
-
+				
+				// lo paso a long 
 				eventId = Long.valueOf(idStr.trim());
 
 			} catch (NumberFormatException e) {
@@ -440,7 +430,7 @@ public class PrivateEventServlet extends HttpServlet {
 					return;
 				}
 
-				// Solo el creador puede abrir la vista de edición.
+				// Comprobamos que el usuario de la sesion es el creador, que es el unico que puede editar sus eventos
 				if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
 					response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para editar este evento.");
 					return;
@@ -448,10 +438,15 @@ public class PrivateEventServlet extends HttpServlet {
 
 				// Por ahora esta rama prepara y muestra el formulario mediante GET.
 				if ("GET".equalsIgnoreCase(request.getMethod())) {
-					request.setAttribute(ConstantsUtils.EVENT, evento);
+					
+					request.setAttribute(ConstantsUtils.EVENT, evento); // por un lado llena los campos con los datos del objeto
+					
+					// y a mayores tambien llena los desplegables
 					request.setAttribute("formatos", formatService.findAll());
 					request.setAttribute("paises", countryService.findAll());
-
+					
+					//aqui saca el desplegable a traves del pais guardado en el evento para pintarlos 
+					// si el evento no tiene provincia, la lista queda vacía; si tiene, busca las localidades de esa provincia.
 					List<ProvinceDTO> provincias = evento.getCountryId() == null ? List.of()
 							: provinceService.findByCountry(evento.getCountryId());
 
@@ -461,25 +456,14 @@ public class PrivateEventServlet extends HttpServlet {
 					request.setAttribute("provincias", provincias);
 					request.setAttribute("localidades", localidades);
 
-					String resultadoCartel = request.getParameter("cartel");
-
-					if ("ok".equals(resultadoCartel)) {
-						request.setAttribute("successMessage", "Cartel actualizado correctamente.");
-					} else if ("vacio".equals(resultadoCartel)) {
-						request.setAttribute("error", "Selecciona un archivo PNG.");
-					} else if ("invalido".equals(resultadoCartel)) {
-						request.setAttribute("error", "El archivo no es una imagen PNG válida.");
-					} else if ("error".equals(resultadoCartel)) {
-						request.setAttribute("error", "No se pudo guardar el cartel.");
-					}
-
 					request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
 					return;
 				}
 
-				// En el siguiente paso añadiremos aquí el guardado por POST.
+				// Aquí el guardado por POST.
 				if ("POST".equalsIgnoreCase(request.getMethod())) {
-
+					
+					// cojemos los datos del formulario guardados en la peticion EN STRING
 					String nombre = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
 					String formatoTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
 					String inicioTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_START_DATE);
@@ -487,7 +471,50 @@ public class PrivateEventServlet extends HttpServlet {
 					String paisTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
 					String provinciaTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 					String localidadTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+					
+					// tambien leemos la imagen si la hay, no la guardamos aun
+					byte[] bytesCartel = null;
+					String formatoCartel = null;
 
+					try {
+					    Part parteCartel = request.getPart("imagen");
+
+					    // Si no eligió otra imagen, bytesCartel queda en null
+					    // y conservaremos el cartel que ya tiene.
+					    if (parteCartel != null && parteCartel.getSize() > 0) {
+					        try (InputStream entrada = parteCartel.getInputStream()) {
+					            bytesCartel = entrada.readAllBytes();
+					        }
+
+					        formatoCartel = WebUtils.validarImagen(
+					                parteCartel.getSubmittedFileName(),
+					                bytesCartel
+					        );
+
+					        if (formatoCartel == null) {
+					            request.setAttribute(
+					                    "error",
+					                    "El cartel debe ser una imagen PNG, JPG o JPEG válida."
+					            );
+					            request.setAttribute(ConstantsUtils.EVENT, evento);
+					            cargarDesplegables(request);
+					            request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
+					                    .forward(request, response);
+					            return;
+					        }
+					    }
+
+					} catch (IOException e) {
+					    logger.error("No se pudo leer el cartel del evento.", e);
+					    request.setAttribute("error", "No se pudo leer la imagen seleccionada.");
+					    request.setAttribute(ConstantsUtils.EVENT, evento);
+					    cargarDesplegables(request);
+					    request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
+					            .forward(request, response);
+					    return;
+					}
+					
+					// checkeamos 
 					if (nombre == null || nombre.isBlank() || formatoTexto == null || formatoTexto.isBlank()
 							|| inicioTexto == null || inicioTexto.isBlank() || finTexto == null || finTexto.isBlank()
 							|| paisTexto == null || paisTexto.isBlank()) {
@@ -510,7 +537,8 @@ public class PrivateEventServlet extends HttpServlet {
 							request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
 							return;
 						}
-
+						
+						// pasamos los string a long 
 						Long formatoId = Long.valueOf(formatoTexto);
 						Long paisId = Long.valueOf(paisTexto);
 
@@ -519,7 +547,8 @@ public class PrivateEventServlet extends HttpServlet {
 
 						Long localidadId = localidadTexto == null || localidadTexto.isBlank() ? null
 								: Long.valueOf(localidadTexto);
-
+						
+						// y ahora si le seteamos al nuevo evento los nuevos valores
 						Event eventoActualizado = new Event();
 						eventoActualizado.setId(eventId);
 						eventoActualizado.setName(nombre.trim());
@@ -533,22 +562,77 @@ public class PrivateEventServlet extends HttpServlet {
 						// Estos valores vienen del evento guardado, no del formulario.
 						eventoActualizado.setCreatorUserId(evento.getCreatorUserId());
 						eventoActualizado.setStatusId(evento.getStatusId());
-
+						
+						// Y llamamos al servicio
 						boolean actualizado = eventService.update(eventoActualizado);
 
-						if (!actualizado) {
+						if (!actualizado) { // si algo falla: 
 							request.setAttribute("error", "No se pudieron guardar los cambios.");
 							request.setAttribute(ConstantsUtils.EVENT, evento);
 							cargarDesplegables(request);
 							request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
 							return;
 						}
+						// si actualizo bien guardamos la imagen nueva si la cambió (si bytescarterl es nu ll es que conserva la foto anterior y esto se lo salta)
+						if (bytesCartel != null) {
+						    ContentMetadata metadata = new ContentMetadata();
+						    metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
+						    metadata.setEntityId(eventId.toString());
+						    metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE); // yo siempre voy a guardar el cartel con nombre "cartel"
+						    metadata.setFormat(formatoCartel); // pero si ya tengo un cartel anterior antes de editarlo y tiene por ej formato png, y guardo uno nuevo con formato jpg van a haber dos carteles y puede cargarse el que no es
 
-						String urlDetalle = request.getContextPath() + ConstantsUtils.PUBLIC_EVENT_SERVLET + "?"
+						    ContentData cartel = new ContentData();
+						    cartel.setMetadata(metadata);
+						    cartel.setRaw(bytesCartel);
+
+						    try {
+						    	// entonces primero GUARDO el nuevo
+						        contentService.save(cartel);
+						        List<ContentData> contenidosEvento =
+						                contentService.get( // despues obtengo todos los que haya
+						                        ConstantsUtils.EVENT_ENTITY_TYPE,
+						                        eventId.toString()
+						                );
+
+						        for (ContentData contenido : contenidosEvento) {
+						            ContentMetadata metadataAnterior = contenido.getMetadata();
+
+						            if (metadataAnterior != null
+						                    && ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE.equals(
+						                            metadataAnterior.getResourceType())
+						                    && !formatoCartel.equalsIgnoreCase( // el cartel que tenga un formato distinto al ultimo que guarde lo elimina
+						                            metadataAnterior.getFormat())) { // y si es el mismo formato sobreescribe el archivo
+
+						                contentService.remove(metadataAnterior);
+						            }
+						        }
+						        }catch (DataException de) {  // content remove puede lanzar un dataexception
+						            logger.error(
+						                    "El cartel nuevo se guardó, pero no se pudo borrar el cartel anterior.",
+						                    de
+						            );
+						            response.sendError(
+						                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						                    "El cartel se guardó, pero no se pudo eliminar la versión anterior."
+						            );
+						            return;
+						    } catch (ContentException ce) {
+						        logger.error(
+						                "El evento se actualizó, pero no se pudo guardar el nuevo cartel.",
+						                ce
+						        );
+						        response.sendError(
+						                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						                "El evento se actualizó, pero no se pudo guardar el cartel."
+						        );
+						        return;
+						    }
+						}
+						
+						// si funciona bien redirect
+						response.sendRedirect(request.getContextPath() + ConstantsUtils.PUBLIC_EVENT_SERVLET + "?"
 								+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL
-								+ "&" + ConstantsUtils.REQUEST_PARAM_ID + "=" + eventId;
-
-						response.sendRedirect(urlDetalle);
+								+ "&" + ConstantsUtils.REQUEST_PARAM_ID + "=" + eventId);
 						return;
 
 					} catch (DateTimeParseException | NumberFormatException e) {
@@ -562,15 +646,17 @@ public class PrivateEventServlet extends HttpServlet {
 
 				// Si llega un método distinto de GET o POST, lo rechazamos.
 				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Método no permitido.");
-				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-						"El guardado de cambios todavía no está implementado.");
 
 			} catch (ServiceException se) {
 				logger.error("Error al cargar la edición del evento con ID: " + eventId, se);
 				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 						"No se pudo cargar el evento para editarlo.");
 			}
-
+			
+			
+			
+			
+			// ACCION = MOSTRAR TODOS LOS EVENTOS DE UN USUARIO CONCRETO
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_MY_EVENTS.equalsIgnoreCase(action)) {
 
 			// Para ver los eventos propios hace falta tener sesión iniciada.
@@ -605,128 +691,6 @@ public class PrivateEventServlet extends HttpServlet {
 			}
 		}
 
-		// SUBIR CARTEL DE EVENTO
-		else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPLOAD_LINEUP.equalsIgnoreCase(action)) {
-
-			if (!"POST".equalsIgnoreCase(request.getMethod())) {
-				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "La subida del cartel requiere POST.");
-				return;
-			}
-
-			if (user == null || user.getId() == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-				return;
-			}
-
-			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
-			Long eventId;
-
-			try {
-				if (idStr == null || idStr.isBlank()) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
-					return;
-				}
-
-				eventId = Long.valueOf(idStr.trim());
-			} catch (NumberFormatException e) {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
-				return;
-			}
-
-			EventDTO evento;
-
-			try {
-				evento = eventService.findById(eventId);
-			} catch (ServiceException e) {
-				logger.error("No se pudo cargar el evento " + eventId, e);
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudo cargar el evento.");
-				return;
-			}
-
-			if (evento == null) {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
-				return;
-			}
-
-			if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
-				response.sendError(HttpServletResponse.SC_FORBIDDEN,
-						"No tienes permiso para cambiar el cartel de este evento.");
-				return;
-			}
-
-			byte[] bytesCartel;
-
-			try {
-				bytesCartel = WebUtils.leerBytes(request, "imagen");
-			} catch (ServletException e) {
-				logger.warn("La petición multipart del cartel no es válida.", e);
-				volverAEditarCartel(request, response, eventId, "invalido");
-				return;
-			}
-
-			if (bytesCartel == null || bytesCartel.length == 0) {
-				volverAEditarCartel(request, response, eventId, "vacio");
-				return;
-			}
-
-			try (ByteArrayInputStream entrada = new ByteArrayInputStream(bytesCartel)) {
-				if (ImageIO.read(entrada) == null) {
-					volverAEditarCartel(request, response, eventId, "invalido");
-					return;
-				}
-			} catch (IOException e) {
-				logger.warn("No se pudo leer la imagen del cartel.", e);
-				volverAEditarCartel(request, response, eventId, "invalido");
-				return;
-			}
-
-			ContentMetadata metadata = new ContentMetadata();
-			metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
-			metadata.setEntityId(eventId.toString());
-			metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE);
-			metadata.setFormat(".png");
-
-			ContentData cartel = new ContentData();
-			cartel.setMetadata(metadata);
-			cartel.setRaw(bytesCartel);
-
-			try {
-				contentService.save(cartel);
-				logger.info("Cartel guardado para el evento " + eventId);
-				volverAEditarCartel(request, response, eventId, "ok");
-			} catch (ServiceException e) {
-				logger.error("Error al guardar el cartel del evento " + eventId, e);
-				volverAEditarCartel(request, response, eventId, "error");
-			}
-
-			return;
-		}
-
-		// ACCION MOSTRAR IMAGEN DE EVENTO
-		else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP.equalsIgnoreCase(action)) {
-			// primero creamos un objeto ContentMetadata con los metadatos de la imagen de
-			// usuario
-			ContentMetadata metadata = new ContentMetadata();
-			metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
-			// metadata.setEntityId(event.getId().toString());
-			metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE);
-			metadata.setFormat(".png");
-
-			try {
-				ContentData foto = contentService.get(metadata);
-				byte[] bytes = foto.getRaw(); //
-
-				response.setContentType("image/png");
-				response.getOutputStream().write(bytes);
-				response.getOutputStream().flush();
-
-			} catch (ContentException ce) {
-				logger.error("Error al obtener la foto de evento " + ce);
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			}
-			return;
-
-		}
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)

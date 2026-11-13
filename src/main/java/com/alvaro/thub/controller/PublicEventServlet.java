@@ -272,26 +272,54 @@ public class PublicEventServlet extends HttpServlet {
 			break;
 
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP:
-			// aqui cargamos la foto del cartel del evento
-			String idEvento = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
-			try {
-		        ContentMetadata cm = new ContentMetadata();
-		        cm.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
-		        cm.setEntityId(idEvento);
-		        cm.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE); 
-		        cm.setFormat(".png");
-		        
-		        ContentData cartel = contentService.get(cm);
-		        if (cartel != null && cartel.getRaw() != null) {
-		            response.setContentType("image/png");
-		            response.getOutputStream().write(cartel.getRaw());
-		        } else {
-		            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+		    String idEvento =
+		            request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
+
+		    try {
+		        // Recupera todos los archivos asociados al evento.
+		        List<ContentData> contenidos =
+		                contentService.get(ConstantsUtils.EVENT_ENTITY_TYPE, idEvento);
+
+		        ContentData cartel = null;
+
+		        // De todos ellos, buscamos el que tiene el tipo de recurso "cartel".
+		        if (contenidos != null) {
+		            for (ContentData contenido : contenidos) {
+		                if (contenido != null
+		                        && contenido.getMetadata() != null
+		                        && ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE.equals(
+		                                contenido.getMetadata().getResourceType())) {
+		                    cartel = contenido;
+		                    break;
+		                }
+		            }
 		        }
+
+		        if (cartel == null || cartel.getRaw() == null) {
+		            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+		            return;
+		        }
+
+		        // El formato viene guardado en los metadatos del contenido.
+		        String formato = cartel.getMetadata().getFormat();
+
+		        if (".png".equalsIgnoreCase(formato)) {
+		            response.setContentType("image/png");
+		        } else if (".jpg".equalsIgnoreCase(formato)
+		                || ".jpeg".equalsIgnoreCase(formato)) {
+		            response.setContentType("image/jpeg");
+		        } else {
+		            response.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+		            return;
+		        }
+
+		        response.getOutputStream().write(cartel.getRaw());
+
 		    } catch (ServiceException se) {
-		        logger.error("Error al obtener la foto del cartel para el evento ID: " + idEvento, se);
-		        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+		        logger.error("Error al obtener el cartel del evento " + idEvento, se);
+		        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		    }
+
 		    return;
 			
 		}

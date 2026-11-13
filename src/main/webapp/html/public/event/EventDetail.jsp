@@ -13,7 +13,21 @@
 		<div class="page-header">
 			<h1 class="section-title">Detalle del evento</h1>
 		</div>
+<%!
+// metodo auxiliar para pintar caracteres en html
+private String escaparHtml(String texto) {
+    if (texto == null) {
+        return "";
+    }
 
+    return texto.replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("'", "&#39;");
+}
+
+%>
 		<%
 EventDTO event = (EventDTO) request.getAttribute(ConstantsUtils.EVENT);
 
@@ -42,8 +56,8 @@ if (event != null) {
 
 				<!-- parte izquierda con los datos del evento -->
 				<section class="event-detail-info">
-					<h2 class="event-detail-title">
-						<%=event.getName() != null ? event.getName() : "Evento sin nombre"%>
+					<h2 class="event-detail-title">					
+						<%= escaparHtml(event.getName() != null ? event.getName() : "Evento sin nombre") %>
 					</h2>
 					<p>
 						<strong>Estado:</strong> <span

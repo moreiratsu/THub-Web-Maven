@@ -21,7 +21,7 @@ public final class ConstantsUtils {
 	public static final String USER_ENTITY_TYPE = "usuario";
 	/** Tipo de entidad usado por el CMS para identificar contenido asociado a un evento. */
 	public static final String EVENT_ENTITY_TYPE = "evento";
-	/** Tipo de recurso del CMS para la foto de perfil del usuario. */
+	// Tipo de recurso del CMS 
 	public static final String USER_PROFILE_RESOURCE_TYPE = "perfil";
 	public static final String EVENT_LINEUP_RESOURCE_TYPE = "cartel";
 
@@ -84,6 +84,7 @@ public final class ConstantsUtils {
     public static final String REQUEST_PARAM_START_DATE = "startDate";
     public static final String REQUEST_PARAM_END_DATE = "endDate";
     public static final String REQUEST_PARAM_USER_ID = "userId";
+    public static final String REQUEST_PARAM_CARTEL = "cartel";
     
     /* ------------------------------------------------------------------------------
      * ACCIONES DE LOS SERVLETS 
