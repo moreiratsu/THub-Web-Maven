@@ -1,4 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List, com.alvaro.thub.model.EventDTO" %>
+
+<jsp:include page='<%= "/Public/Event?action=showRecentEvents" %>' />
+
+<%
+List<EventDTO> eventosRecientes =
+        (List<EventDTO>) request.getAttribute("eventosRecientes");
+%>
 
 <!-- HEADER -->
 <%@ include file="/html/common/header.jsp" %> 
@@ -12,52 +20,80 @@
 <!-- MENU LATERAL -->
 <%@ include file="/html/common/asidebar.jsp" %>
 
+
 <!-- CONTENIDO PRINCIPAL -->
 <main class="content-area">
-        <h2 class="section-title">Últimos eventos</h2>
+<section class="home-hero" aria-labelledby="home-title">
+    <div class="home-hero-content">
+        <span class="home-eyebrow">EL DEPORTE SE VIVE EN COMPAÑÍA</span>
 
-        <!-- Banner Carrusel / Evento Destacado -->
-        <div class="featured-banner">
-          <button class="carousel-arrow left" aria-label="Anterior">&lt;</button>
+        <h1 id="home-title">Encuentra tu próximo evento deportivo</h1>
 
-          <div class="banner-body">
-            <div class="ball-icon">⚽</div>
-            <h3 class="banner-title">Torneo de Futbolín</h3>
-            <p class="banner-location">Bar Manolo · Monforte de Lemos</p>
+        <p>Compite, participa y vive el deporte con THUB.</p>
 
-            <div class="carousel-dots">
-              <span class="dot active"></span>
-              <span class="dot"></span>
-              <span class="dot"></span>
-              <span class="dot"></span>
-            </div>
-          </div>
+        <div class="home-hero-actions">
+            <a class="home-button home-button-primary"
+               href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
+                Explorar eventos
+            </a>
 
-          <button class="carousel-arrow right" aria-label="Siguiente">&gt;</button>
+            <a class="home-button home-button-secondary"
+               href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE %>">
+                Crear evento
+            </a>
+        </div>
+    </div>
+</section>
+        <section class="home-sports">
+    <div class="home-section-heading">
+        <div>
+            <span class="home-eyebrow">THUB</span>
+            <h2>Últimos eventos:</h2>
         </div>
 
-        <!-- Cards de Estadísticas / Métricas -->
-        <div class="stats-grid">
+        <a class="home-all-events"
+           href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH %>">
+            Ver todos los eventos →
+        </a>
+    </div>
 
-          <div class="stat-card">
-            <span class="stat-label">EVENTOS ACTIVOS</span>
-            <div class="stat-value">5</div>
-            <div class="stat-sub">+2 este mes</div>
-          </div>
-
-          <div class="stat-card">
-            <span class="stat-label">PARTICIPANTES</span>
-            <div class="stat-value">128</div>
-            <div class="stat-sub">+14 esta semana</div>
-          </div>
-
-          <div class="stat-card">
-            <span class="stat-label">EQUIPOS</span>
-            <div class="stat-value">23</div>
-            <div class="stat-sub">Temporada 25/26</div>
-          </div>
-
+    <div class="home-sport-grid">
+       <%
+if (eventosRecientes != null && !eventosRecientes.isEmpty()) {
+    for (EventDTO evento : eventosRecientes) {
+%>
+    <article class="home-sport-card home-event-card">
+        <div class="home-event-poster">
+            <img
+                src="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= evento.getId() %>"
+                alt="Cartel del evento"
+                onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/img/event_poster.jpg';">
         </div>
+
+        <div class="home-event-info">
+            <h3><%= evento.getName() %></h3>
+            <p>Inicio:
+                <%= evento.getStartDate() != null ? evento.getStartDate() : "Sin fecha" %>
+            </p>
+            <p>Formato:
+                <%= evento.getFormatName() != null ? evento.getFormatName() : "Sin formato" %>
+            </p>
+
+            <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= evento.getId() %>">
+                Ver evento →
+            </a>
+        </div>
+    </article>
+<%
+    }
+} else {
+%>
+    <p>Todavía no hay eventos creados.</p>
+<%
+}
+%>
+    </div>
+</section>
       </main>
       
 <!-- PIE DE PÁGINA -->      

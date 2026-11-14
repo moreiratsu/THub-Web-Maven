@@ -27,3 +27,8 @@ cambiar la forma de calcular los estados del inicio y fin de un evento, de forma
 
 -Poner filtros de orden en la búsqueda. Poder filtrar por orden alfabetico, numerico (ids), fechas proximas.
 
+- PONER QUE EL OJO DE PASSWORD MUESTRE LA PASS MOMENTANEAMENTE
+
+- poner previsualizacion de foto de perfil al editarla, y pais y provincia en los campos a rellenar
+
+- cuando no tengo eventos propios y le doy a la opcion dem is eventos me da error 500

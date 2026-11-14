@@ -117,7 +117,7 @@ if (esCreador) {
 
 				<!-- Botón para editar -->
 				<a
-					href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
+					href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= event.getId() %>"
 					title="Editar evento" aria-label="Editar evento"
 					class="action-btn action-edit"> <svg viewBox="0 0 24 24"
 						fill="none" stroke="currentColor" stroke-width="2">

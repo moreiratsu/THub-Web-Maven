@@ -123,7 +123,7 @@
 						<label class="field-label">ORGANIZADOR</label> <select
 							name="<%=ConstantsUtils.REQUEST_PARAM_USER_ID%>"
 							class="form-control">
-							<option value="">Todos los orhanizadores</option>
+							<option value="">Todos los organizadores</option>
 							<%
 							if (organizadores != null) {
 								for (UserDTO organizador : organizadores) {
@@ -319,7 +319,7 @@
 									if (esCreador) {
 									%>
 									<a
-										href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= e.getId() %>"
+										href="${pageContext.request.contextPath}<%= ConstantsUtils.PRIVATE_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_UPDATE %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= e.getId() %>"
 										title="Editar Evento" class="action-btn action-edit"> <svg
 											viewBox="0 0 24 24" fill="none" stroke="currentColor"
 											stroke-width="2">

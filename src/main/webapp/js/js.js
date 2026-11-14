@@ -81,15 +81,21 @@ function toggleTheme() {
 // Carga de la preferencia guardada al refrescar o cambiar de página
 (function initTheme() {
     const currentTheme = localStorage.getItem("theme");
-    if (currentTheme === "light") {
-        document.body.classList.add("light-theme");
 
-        // Esperamos brevemente a que el DOM pinte el SVG para cambiarlo a Luna
-        window.addEventListener("DOMContentLoaded", function() {
+    if (currentTheme === "light") {
+        document.addEventListener("DOMContentLoaded", function() {
+            document.body.classList.add("light-theme");
+
             const themeIcon = document.getElementById("theme-icon");
             const themeToggleBtn = document.getElementById("theme-toggle");
-            if (themeIcon) themeIcon.innerHTML = MOON_ICON;
-            if (themeToggleBtn) themeToggleBtn.title = "Cambiar a modo oscuro";
+
+            if (themeIcon) {
+                themeIcon.innerHTML = MOON_ICON;
+            }
+
+            if (themeToggleBtn) {
+                themeToggleBtn.title = "Cambiar a modo oscuro";
+            }
         });
     }
 })();

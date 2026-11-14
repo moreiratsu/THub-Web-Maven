@@ -1,15 +1,11 @@
 package com.alvaro.thub.controller;
 
 import java.io.IOException;
-import java.io.ByteArrayInputStream;
-import javax.imageio.ImageIO;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import jakarta.servlet.annotation.MultipartConfig;
 
 import com.alvaro.thub.dao.DataException;
-import com.alvaro.thub.dao.criteria.EventCriteria;
 import com.alvaro.thub.model.ContentData;
 import com.alvaro.thub.model.ContentException;
 import com.alvaro.thub.model.ContentMetadata;
@@ -139,21 +135,71 @@ public class PrivateEventServlet extends HttpServlet {
 		cargarDesplegables(request);
 		request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
 	}
+	
+	/*
+	 * Evento auxiliar para acciones como editar eliminar o cambiar estado, que necesitan que un usuario este logueado y sea
+	 * el propietario de un evento para poder hacer cambios en el. 
+	 * 
+	 * @param request para obtener el id del evento, response para devolver un mensaje de error si pasa algo, user para comparar quien esta logueado con quien lo creo
+	 * @return el evento
+	 */
+	
+	private EventDTO obtenerEventoDelOrganizador (HttpServletRequest request, HttpServletResponse response, UserDTO user) 
+			throws IOException, ServiceException{
+		
+		String idUrlString = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID); // obtenemos el id del evento de la peticion (viene como STRING)
+		Long eventId = null; // el verdadero ID tipo long de momento lo pongo como null
+		
+		// Comprobamos si el string tiene valor
+		try {
+			if (idUrlString == null || idUrlString.isBlank()) {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
+				return null;
+			}
+			//convertimos el string a Long y ya tenemos el id del evento
+			eventId = Long.valueOf(idUrlString.trim());
 
+		} catch (NumberFormatException e) {
+			logger.error("El ID no es válido : " + e);
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
+			return null;
+		}
+
+			// Buscamos el evento para saber quién lo creó.	
+			EventDTO evento = eventService.findById(eventId);
+
+			if (evento == null) {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
+				return null;
+			}
+
+			// Solo el creador del evento puede borrar sus eventos
+			if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para esta acción.");
+				return null;
+			}
+		return evento;
+	}
+	
+	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
 		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 
-		// ACCION = MOSTRAR NewEvent.jsp
+		/* ========================================================================================================================================
+		 *                                                   ACCION = MOSTRAR NewEvent.jsp
+		 ============================================================================================================================================*/
 		if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE.equalsIgnoreCase(action)) {
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.EVENT_NEW).forward(request, response);
 			return;
 		}
 
-		// ACCION = CREAR nuevo evento
+		/* =============================================================================================================================================
+		 *                                                   ACCION = CREAR nuevo evento
+		  ===========================================================================================================================================*/
 		else if (ConstantsUtils.REQUEST_EVENT_ACTION_CREATE.equalsIgnoreCase(action)) {
 
 			// 1. Cojo la plantilla del objeto evento
@@ -330,57 +376,25 @@ public class PrivateEventServlet extends HttpServlet {
 				volverAlFormularioConError(request, response, "No se pudo guardar el evento.");
 				return;
 			}
-
 			
-			
-			
-			
-			// ACCION = ELIMINAR un evento
+			/* =====================================================================================================================================
+			 *                                                 ACCION = ELIMINAR un evento
+			======================================================================================================================================= */
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_DELETE.equalsIgnoreCase(action)) {
-
-			String idUrlString = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID); // obtenemos el id del evento de la peticion (viene como STRING)
-			Long eventId = null; // el verdadero ID tipo long de momento lo pongo como null
 			
-			// Comprobamos si el string tiene valor
 			try {
-				if (idUrlString == null || idUrlString.isBlank()) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
-					return;
-				}
-				//convertimos el string a Long y ya tenemos el id del evento a eliminar
-				eventId = Long.valueOf(idUrlString.trim());
+				EventDTO evento = obtenerEventoDelOrganizador(request, response, user); // cojo el evento de mi metodo auxiliar que ya me lo da checkeado
+				
+				if (evento == null) {return;}
+				
+				boolean eliminado = eventService.delete(evento.getId()); //  llamo al servicio y lo borro a traves de su id
 
-			} catch (NumberFormatException e) {
-				logger.error("El ID no es válido : " + e);
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
-				return;
-			}
-
-			// Buscamos el evento para saber quién lo creó.
-			try {	
-				EventDTO evento = eventService.findById(eventId);
-
-				if (evento == null) {
-					response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
-					return;
-				}
-
-				// Solo el creador del evento puede borrar sus eventos
-				if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
-					response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para borrar este evento.");
-					return;
-				}
-
-				// Solo llegamos aquí si el usuario es el creador.
-				boolean eliminado = eventService.delete(eventId); // ya tenemos el id del evento y somos el usuario con permido de borrar solo queda llamar al servicio
-
-				if (!eliminado) {
+				if (!eliminado) { // si no se borra ERROR
 					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudo borrar el evento.");
 					return;
 				}
-				
+			
 				// si lo elimina lo redirigimos a a lista de eventos (aqui no se hace forward porque si hiciera un forward y f5 volveria a cargar la url del borrado pero ya no hay un evento con ese id entoces me daria el error 404)
-
 				response.sendRedirect(response.encodeRedirectURL(request.getContextPath()
 				        + ConstantsUtils.PUBLIC_EVENT_SERVLET
 				        + "?"
@@ -390,54 +404,19 @@ public class PrivateEventServlet extends HttpServlet {
 				return;
 
 			} catch (ServiceException se) {
-				logger.error("Error al eliminar el evento con ID: " + eventId, se);
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Se produjo un error al borrar el evento.");
+				logger.error("Error al eliminar el evento.", se);
+		        response.sendError( HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Se produjo un error al borrar el evento.");
+		        return;
 			}
-			
-			
-			
-			
-			// Accion = EDITAR/ACTUALIZAR un evento 
-			//(en esta accion voy a probar a hacer dos cosas en la misma accion,
-			//con get muestro los datos actuales y con POST guardo los cambios)
-		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE.equalsIgnoreCase(action)) {
-
-
-			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
-			Long eventId;
-
-			// Comprobamos que llega un ID numérico.
-			try {
-				if (idStr == null || idStr.isBlank()) {
-					response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Falta el ID del evento.");
-					return;
-				}
-				
-				// lo paso a long 
-				eventId = Long.valueOf(idStr.trim());
-
-			} catch (NumberFormatException e) {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "El ID del evento no es válido.");
-				return;
-			}
-
-			try {
-				// Buscamos el evento.
-				EventDTO evento = eventService.findById(eventId);
-
-				if (evento == null) {
-					response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento no existe.");
-					return;
-				}
-
-				// Comprobamos que el usuario de la sesion es el creador, que es el unico que puede editar sus eventos
-				if (evento.getCreatorUserId() == null || !user.getId().equals(evento.getCreatorUserId())) {
-					response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para editar este evento.");
-					return;
-				}
-
-				// Por ahora esta rama prepara y muestra el formulario mediante GET.
-				if ("GET".equalsIgnoreCase(request.getMethod())) {
+					
+			/* ======================================================================================================================================
+			 *                                         Accion = MOSTRAR VISTA DE EDICION un evento 
+			======================================================================================================================================== */
+		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_UPDATE.equalsIgnoreCase(action)) {
+			try {	
+				EventDTO evento = obtenerEventoDelOrganizador(request, response, user); // obtengo el evento
+	        	
+	        	if (evento == null) {return;} // si es null para
 					
 					request.setAttribute(ConstantsUtils.EVENT, evento); // por un lado llena los campos con los datos del objeto
 					
@@ -458,11 +437,21 @@ public class PrivateEventServlet extends HttpServlet {
 
 					request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
 					return;
-				}
-
-				// Aquí el guardado por POST.
-				if ("POST".equalsIgnoreCase(request.getMethod())) {
-					
+			} catch (ServiceException se) {
+				logger.error("No se pudo preparar la edición del evento.", se);
+				response.sendError( HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudo cargar el formulario de edición." );
+	        return;
+	    }
+		
+				/* ======================================================================================================================================
+				 *                                         Accion = EDICION/ACTUALIZACION de un evento 
+				======================================================================================================================================== */	
+		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_UPDATE.equalsIgnoreCase(action)) {
+					try {					
+					EventDTO evento = obtenerEventoDelOrganizador(request, response, user); // obtengo el evento
+		        	
+		        	if (evento == null) {return;} // si es null para
+		        	
 					// cojemos los datos del formulario guardados en la peticion EN STRING
 					String nombre = request.getParameter(ConstantsUtils.REQUEST_PARAM_NAME);
 					String formatoTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_FORMAT_ID);
@@ -492,14 +481,10 @@ public class PrivateEventServlet extends HttpServlet {
 					        );
 
 					        if (formatoCartel == null) {
-					            request.setAttribute(
-					                    "error",
-					                    "El cartel debe ser una imagen PNG, JPG o JPEG válida."
-					            );
+					            request.setAttribute( "error",  "El cartel debe ser una imagen PNG, JPG o JPEG válida.");
 					            request.setAttribute(ConstantsUtils.EVENT, evento);
 					            cargarDesplegables(request);
-					            request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT)
-					                    .forward(request, response);
+					            request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
 					            return;
 					        }
 					    }
@@ -550,7 +535,7 @@ public class PrivateEventServlet extends HttpServlet {
 						
 						// y ahora si le seteamos al nuevo evento los nuevos valores
 						Event eventoActualizado = new Event();
-						eventoActualizado.setId(eventId);
+						eventoActualizado.setId(evento.getId());
 						eventoActualizado.setName(nombre.trim());
 						eventoActualizado.setStartDate(java.sql.Date.valueOf(fechaInicio));
 						eventoActualizado.setEndDate(java.sql.Date.valueOf(fechaFin));
@@ -577,7 +562,7 @@ public class PrivateEventServlet extends HttpServlet {
 						if (bytesCartel != null) {
 						    ContentMetadata metadata = new ContentMetadata();
 						    metadata.setEntityType(ConstantsUtils.EVENT_ENTITY_TYPE);
-						    metadata.setEntityId(eventId.toString());
+						    metadata.setEntityId(evento.getId().toString());
 						    metadata.setResourceType(ConstantsUtils.EVENT_LINEUP_RESOURCE_TYPE); // yo siempre voy a guardar el cartel con nombre "cartel"
 						    metadata.setFormat(formatoCartel); // pero si ya tengo un cartel anterior antes de editarlo y tiene por ej formato png, y guardo uno nuevo con formato jpg van a haber dos carteles y puede cargarse el que no es
 
@@ -591,7 +576,7 @@ public class PrivateEventServlet extends HttpServlet {
 						        List<ContentData> contenidosEvento =
 						                contentService.get( // despues obtengo todos los que haya
 						                        ConstantsUtils.EVENT_ENTITY_TYPE,
-						                        eventId.toString()
+						                        evento.getId().toString()
 						                );
 
 						        for (ContentData contenido : contenidosEvento) {
@@ -602,29 +587,16 @@ public class PrivateEventServlet extends HttpServlet {
 						                            metadataAnterior.getResourceType())
 						                    && !formatoCartel.equalsIgnoreCase( // el cartel que tenga un formato distinto al ultimo que guarde lo elimina
 						                            metadataAnterior.getFormat())) { // y si es el mismo formato sobreescribe el archivo
-
 						                contentService.remove(metadataAnterior);
 						            }
 						        }
 						        }catch (DataException de) {  // content remove puede lanzar un dataexception
-						            logger.error(
-						                    "El cartel nuevo se guardó, pero no se pudo borrar el cartel anterior.",
-						                    de
-						            );
-						            response.sendError(
-						                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						                    "El cartel se guardó, pero no se pudo eliminar la versión anterior."
-						            );
+						            logger.error("El cartel nuevo se guardó, pero no se pudo borrar el cartel anterior.", de);
+						            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"El cartel se guardó, pero no se pudo eliminar la versión anterior." );
 						            return;
 						    } catch (ContentException ce) {
-						        logger.error(
-						                "El evento se actualizó, pero no se pudo guardar el nuevo cartel.",
-						                ce
-						        );
-						        response.sendError(
-						                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						                "El evento se actualizó, pero no se pudo guardar el cartel."
-						        );
+						        logger.error("El evento se actualizó, pero no se pudo guardar el nuevo cartel.",ce);
+						        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"El evento se actualizó, pero no se pudo guardar el cartel.");
 						        return;
 						    }
 						}
@@ -632,7 +604,7 @@ public class PrivateEventServlet extends HttpServlet {
 						// si funciona bien redirect
 						response.sendRedirect(request.getContextPath() + ConstantsUtils.PUBLIC_EVENT_SERVLET + "?"
 								+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL
-								+ "&" + ConstantsUtils.REQUEST_PARAM_ID + "=" + eventId);
+								+ "&" + ConstantsUtils.REQUEST_PARAM_ID + "=" + evento.getId());
 						return;
 
 					} catch (DateTimeParseException | NumberFormatException e) {
@@ -642,29 +614,17 @@ public class PrivateEventServlet extends HttpServlet {
 						request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
 						return;
 					}
-				}
-
-				// Si llega un método distinto de GET o POST, lo rechazamos.
-				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Método no permitido.");
-
-			} catch (ServiceException se) {
-				logger.error("Error al cargar la edición del evento con ID: " + eventId, se);
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						"No se pudo cargar el evento para editarlo.");
-			}
+					} catch (ServiceException se) {
+					    logger.error("Error al actualizar el evento.", se);
+					    response.sendError( HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"No se pudieron guardar los cambios del evento." );
+					    return;
+					}
+				
 			
-			
-			
-			
-			// ACCION = MOSTRAR TODOS LOS EVENTOS DE UN USUARIO CONCRETO
+			/* =================================================================================================================================
+			 *                                 ACCION = MOSTRAR TODOS LOS EVENTOS DE UN USUARIO CONCRETO
+			 ====================================================================================================================================*/
 		} else if (ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_MY_EVENTS.equalsIgnoreCase(action)) {
-
-			// Para ver los eventos propios hace falta tener sesión iniciada.
-			if (user == null || user.getId() == null) {
-				response.sendRedirect(request.getContextPath() + ConstantsUtils.USER_LOGIN);
-				return;
-			}
-
 			try {
 				// Buscamos los eventos cuyo creador es el usuario conectado.
 				List<EventDTO> misEventos = eventService.findByCreator(user.getId());
@@ -689,113 +649,51 @@ public class PrivateEventServlet extends HttpServlet {
 				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudieron cargar tus eventos.");
 				return;
 			}
-		
-			
-			
-			
-		// Acción = cambiar el estado del evento.
+				
+		/* ========================================================================================================================================
+		 *                                            Acción = cambiar el estado del evento.
+		 ==========================================================================================================================================*/
 		}else if (ConstantsUtils.REQUEST_EVENT_ACTION_CHANGE_STATUS.equalsIgnoreCase(action)) {
-
-	    // Esta acción solo acepta POST.
-	    if (!"POST".equalsIgnoreCase(request.getMethod())) {
-	        response.sendError(
-	                HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-	                "El cambio de estado requiere POST."
-	        );
-	        return;
-	    }
-
-	    // Leemos y validamos el ID del evento.
-	    String idTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
-
-	    Long eventId;
-
-	    try {
-	        if (idTexto == null || idTexto.isBlank()) {
-	            response.sendError(HttpServletResponse.SC_BAD_REQUEST,"Falta el ID del evento.");
-	            return;
-	        }
-
-	        eventId = Long.valueOf(idTexto.trim());
-
-	    } catch (NumberFormatException e) {
-	        response.sendError(HttpServletResponse.SC_BAD_REQUEST,"El ID del evento no es válido.");
-	        return;
-	    }
-
-	    try {
-	        EventDTO evento = eventService.findById(eventId);
-
-	        if (evento == null) {
-	            response.sendError(HttpServletResponse.SC_NOT_FOUND,"El evento no existe.");
-	            return;
-	        }
-
-	        // Solo el organizador del evento puede cambiar su estado.
-	        if (evento.getCreatorUserId() == null
-	                || !user.getId().equals(evento.getCreatorUserId())) {
-	            response.sendError(
-	                    HttpServletResponse.SC_FORBIDDEN,
-	                    "No tienes permiso para cambiar el estado de este evento."
-	            );
-	            return;
-	        }
-	        
-	        // ahora que ya tengo el evento puedo obtener su estado
-	        String estadoActual = evento.getStatusName();
-	        String estadoSolicitado =
-	                request.getParameter(ConstantsUtils.REQUEST_PARAM_NEW_STATUS); // y leo de la peticion el nuevo estado
+	        try {
+	        	EventDTO evento = obtenerEventoDelOrganizador(request, response, user); // obtengo el evento
+	        	
+	        	if (evento == null) {return;} // si es null para 
+	        	
+	        	String estadoActual = evento.getStatusName(); // si esta bien coje su estado actual	
+	        	String estadoSolicitado = request.getParameter(ConstantsUtils.REQUEST_PARAM_NEW_STATUS); // y leo de la peticion el nuevo estado
 
 	        if (estadoSolicitado != null) {
 	            estadoSolicitado = estadoSolicitado.trim();
 	        }
 
-	        boolean estaProgramado =
-	                ConstantsUtils.ESTADO_PROGRAMADO.equalsIgnoreCase(estadoActual);
+	        boolean estaProgramado = ConstantsUtils.ESTADO_PROGRAMADO.equalsIgnoreCase(estadoActual);
 
-	        boolean estaEnCurso =
-	                ConstantsUtils.ESTADO_EN_CURSO.equalsIgnoreCase(estadoActual);
+	        boolean estaEnCurso = ConstantsUtils.ESTADO_EN_CURSO.equalsIgnoreCase(estadoActual);
 
-	        boolean quiereIniciar =
-	                ConstantsUtils.ESTADO_EN_CURSO.equalsIgnoreCase(estadoSolicitado);
+	        boolean quiereIniciar = ConstantsUtils.ESTADO_EN_CURSO.equalsIgnoreCase(estadoSolicitado);
 
-	        boolean quiereCancelar =
-	                ConstantsUtils.ESTADO_CANCELADO.equalsIgnoreCase(estadoSolicitado);
+	        boolean quiereCancelar = ConstantsUtils.ESTADO_CANCELADO.equalsIgnoreCase(estadoSolicitado);
 
-	        boolean quiereFinalizar =
-	                ConstantsUtils.ESTADO_FINALIZADO.equalsIgnoreCase(estadoSolicitado);
+	        boolean quiereFinalizar = ConstantsUtils.ESTADO_FINALIZADO.equalsIgnoreCase(estadoSolicitado);
 
-	        boolean cambioPermitido =
-	                (estaProgramado && (quiereIniciar || quiereCancelar))
-	                || (estaEnCurso && (quiereCancelar || quiereFinalizar));
+	        boolean cambioPermitido = (estaProgramado && (quiereIniciar || quiereCancelar)) || (estaEnCurso && (quiereCancelar || quiereFinalizar));
 
 	        if (!cambioPermitido) {
-	            response.sendError(
-	                    HttpServletResponse.SC_CONFLICT,
-	                    "Ese cambio de estado no está permitido."
-	            );
+	            response.sendError( HttpServletResponse.SC_CONFLICT, "Ese cambio de estado no está permitido.");
 	            return;
 	        }
 
 	        List<Status> estados = statusService.findByName(estadoSolicitado);
 
-	        if (estados == null || estados.isEmpty()
-	                || estados.get(0).getId() == null) {
-	            response.sendError(
-	                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-	                    "No se encontró el estado solicitado."
-	            );
+	        if (estados == null || estados.isEmpty() || estados.get(0).getId() == null) {
+	            response.sendError( HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se encontró el estado solicitado.");
 	            return;
 	        }
 
-	        boolean actualizado =
-	                eventService.updateStatus(eventId, estados.get(0).getId());
+	        boolean actualizado = eventService.updateStatus(evento.getId(), estados.get(0).getId());
 
 	        if (!actualizado) {
-	            response.sendError(
-	                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-	                    "No se pudo actualizar el estado."
-	            );
+	            response.sendError( HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudo actualizar el estado.");
 	            return;
 	        }
 
@@ -808,24 +706,16 @@ public class PrivateEventServlet extends HttpServlet {
 	                + "&"
 	                + ConstantsUtils.REQUEST_PARAM_ID
 	                + "="
-	                + eventId;
+	                + evento.getId();
 
 	        response.sendRedirect(response.encodeRedirectURL(urlDetalle));
 	        return;
-
-	    } catch (ServiceException se) {
-	        logger.error(
-	                "Error al cambiar el estado del evento con ID: " + eventId,
-	                se
-	        );
-	        response.sendError(
-	                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-	                "Se produjo un error al cambiar el estado."
-	        );
-	        return;
-	    }
-		
-		}
+	        } catch (ServiceException se) {
+		        logger.error("Error al cambiar el estado del evento con ID: ", se);
+		        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Se produjo un error al cambiar el estado.");
+		        return;
+		    }
+	        }
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)

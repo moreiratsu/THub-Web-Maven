@@ -92,18 +92,19 @@ public final class ConstantsUtils {
      ---------------------------------------------------------------------------------*/
 	public static final String REQUEST_PARAM_ACTION = "action";
     // acciones de eventos
-	public static final String REQUEST_EVENT_ACTION_SEARCH = "search";
-	public static final String REQUEST_EVENT_ACTION_DETAIL = "detail";
-	public static final String REQUEST_EVENT_ACTION_DELETE = "delete";
-	public static final String REQUEST_EVENT_ACTION_CREATE = "create";
-	public static final String REQUEST_EVENT_ACTION_UPDATE = "update";
 	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
-	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
+	public static final String REQUEST_EVENT_ACTION_SEARCH = "search";	
+	public static final String REQUEST_EVENT_ACTION_DETAIL = "detail";
+	public static final String REQUEST_EVENT_ACTION_DELETE = "delete";	
 	public static final String REQUEST_EVENT_ACTION_SHOW_CREATE = "showCreate";
+	public static final String REQUEST_EVENT_ACTION_CREATE = "create";	
+	public static final String REQUEST_EVENT_ACTION_SHOW_UPDATE = "showUpdate";
+	public static final String REQUEST_EVENT_ACTION_UPDATE = "update";
+	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_MY_EVENTS = "showMyEvents";
 	public static final String REQUEST_EVENT_ACTION_CHANGE_STATUS = "changeStatus";
 
-
+	public static final String REQUEST_EVENT_ACTION_SHOW_RECENT_EVENTS = "showRecentEvents";
 	
 	/* ------------------------------------------------------------------------------------
 	 TIPOS DE ESTADOS

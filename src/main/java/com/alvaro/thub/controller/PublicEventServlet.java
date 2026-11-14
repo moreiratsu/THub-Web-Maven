@@ -125,8 +125,9 @@ public class PublicEventServlet extends HttpServlet {
 			throws ServletException, IOException {
 
 		String action = request.getParameter(ConstantsUtils.REQUEST_PARAM_ACTION);
+		
 		if (action == null || action.trim().isEmpty()) {
-			action = ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH; // O redirigir a una página principal
+			action = ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_RECENT_EVENTS;
 		}
 		switch (action) {
 
@@ -318,12 +319,34 @@ public class PublicEventServlet extends HttpServlet {
 		        logger.error("Error al obtener el cartel del evento " + idEvento, se);
 		        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		    }
+		    return;		
+		
+		
+			case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_RECENT_EVENTS: {
+			    try {
+			        EventCriteria criteria2 = new EventCriteria();
 
-		    return;
-			
-		}
+			        // Los ID más altos corresponden a los eventos insertados más recientemente.
+			        criteria2.setOrderBy(criteria2.ORDER_BY_ID);
+			        criteria2.setAscDesc(false);
+
+			        // Traemos solo tres eventos.
+			        Results<EventDTO> resultados =
+			                eventService.findBy(criteria2, 1, 3);
+
+			        // La JSP recibirá esta lista para pintar las tarjetas.
+			        request.setAttribute("eventosRecientes", resultados.getPage());
+			        
+			    } catch (ServiceException se) {
+			        logger.error("No se pudieron cargar los eventos recientes.", se);
+			        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No se pudieron cargar los eventos recientes." );
+			    }
+
+			    return;
+			}
 	}
-
+	
+}
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		doGet(request, response);
