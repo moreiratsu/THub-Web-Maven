@@ -11,30 +11,27 @@ public final class ConstantsUtils {
 	}
 	
 	/*------------------------------------------------------------------------------
-	 * ENTIDADES
+	 *                               ENTIDADES
 	 -----------------------------------------------------------------------------*/
 	
-	/** Nombre del atributo de sesión con el usuario autenticado. */
 	public static final String USER_SESSION_ATTRIBUTE = "usuario";
+	public static final String EVENT = "event";
 
-	/** Tipo de entidad usado por el CMS para identificar contenido asociado a un usuario. */
+	/*------------------------------------------------------------------------------
+	 *                         CMS (gestor de contenido)
+	 -----------------------------------------------------------------------------*/
+	// Tipo de entidad usado por el CMS 
 	public static final String USER_ENTITY_TYPE = "usuario";
-	/** Tipo de entidad usado por el CMS para identificar contenido asociado a un evento. */
 	public static final String EVENT_ENTITY_TYPE = "evento";
 	// Tipo de recurso del CMS 
-	public static final String USER_PROFILE_RESOURCE_TYPE = "perfil";
-	public static final String EVENT_LINEUP_RESOURCE_TYPE = "cartel";
-
-	public static final String EVENT = "event";
+	public static final String USER_PROFILE_RESOURCE_TYPE = "imagen_perfil_usuario";
+	public static final String EVENT_LINEUP_RESOURCE_TYPE = "imagen_cartel_evento";	
 		
-	
-	
 	/* ------------------------------------------------------------------------------------
-	 VISTAS JSP
+	                                   VISTAS JSP
 	---------------------------------------------------------------------------------------*/
 	
 	public static final String INDEX = "/index.jsp";
-	public static final String ERROR_404 = "/html/common/error404.jsp";
 	
 	public static final String USER_LOGIN = "/html/public/user/login.jsp";
 	public static final String USER_REGISTER = "/html/public/user/register.jsp";
@@ -44,18 +41,15 @@ public final class ConstantsUtils {
 	public static final String EVENT_DETAIL = "/html/public/event/EventDetail.jsp";
 	public static final String EVENT_NEW = "/html/private/event/NewEvent.jsp";
 	public static final String EVENT_EDIT = "/html/private/event/EditEvent.jsp";
-
 	
 	/*------------------------------------------------------------------------------
-	 * SERVLETS 
+	 *                                  SERVLETS 
 	 -----------------------------------------------------------------------------*/
-	// IMPORTANTISIMO!!!!!! EN LOS @WebServlet de los servlets,
-	// hay que poner exactamente el mismo valor que en estas constantes
+
 	public static final String PUBLIC_USER_SERVLET = "/Public/User";
 	public static final String PRIVATE_USER_SERVLET = "/Private/User";
 	public static final String PRIVATE_EVENT_SERVLET = "/Private/Event";
 	public static final String PUBLIC_EVENT_SERVLET = "/Public/Event";
-
 	
 	/*------------------------------------------------------------------------------
 	 * CONSTANTES DE LOS PARAMETROS ED LAs REQUEST DE LOS SERVLETS (los parametros que vienen en la URL o en los formularios)
@@ -88,10 +82,20 @@ public final class ConstantsUtils {
     public static final String REQUEST_PARAM_NEW_STATUS = "newStatus";
     
     /* ------------------------------------------------------------------------------
-     * ACCIONES DE LOS SERVLETS 
+     *                           ACCIONES DE LOS SERVLETS 
      ---------------------------------------------------------------------------------*/
 	public static final String REQUEST_PARAM_ACTION = "action";
-    // acciones de eventos
+	// acciones de user
+	public static final String USER_ACTION_LOGIN = "login";
+	public static final String USER_ACTION_LOGOUT = "logout";
+	public static final String USER_ACTION_REGISTER = "register";
+	public static final String USER_ACTION_SHOW_PROFILE = "showProfile";
+	public static final String USER_ACTION_UPDATE_PROFILE = "updateProfile";
+	public static final String USER_ACTION_UPDATE_PASSWORD = "updatePassword";
+	public static final String USER_ACTION_UPLOAD_PROFILE_PHOTO = "updateProfilePhoto";
+	public static final String USER_ACTION_SHOW_PROFILE_PHOTO = "showProfilePhoto";
+
+    // acciones de event
 	public static final String REQUEST_EVENT_ACTION_SHOW_SEARCH = "showSearch";
 	public static final String REQUEST_EVENT_ACTION_SEARCH = "search";	
 	public static final String REQUEST_EVENT_ACTION_DETAIL = "detail";
@@ -103,11 +107,10 @@ public final class ConstantsUtils {
 	public static final String REQUEST_EVENT_ACTION_SHOW_LINEUP = "showLineup";
 	public static final String REQUEST_EVENT_ACTION_SHOW_MY_EVENTS = "showMyEvents";
 	public static final String REQUEST_EVENT_ACTION_CHANGE_STATUS = "changeStatus";
-
 	public static final String REQUEST_EVENT_ACTION_SHOW_RECENT_EVENTS = "showRecentEvents";
 	
 	/* ------------------------------------------------------------------------------------
-	 TIPOS DE ESTADOS
+	                                TIPOS DE ESTADOS
 	---------------------------------------------------------------------------------------*/
 	public static final String ESTADO_PROGRAMADO = "Programado";
 	public static final String ESTADO_CANCELADO = "Cancelado";

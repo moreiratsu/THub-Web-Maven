@@ -157,31 +157,43 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 //-----------------------------------------------------------------------------------------------------------------------------------------
 //FUNCION PARA PREVISUALIZAR UNA IMAGEN ANTES DE ENVIARLA CON EL FORMULARIO, NO LA SUBE SOLO LA MUESTRA
-document.addEventListener("DOMContentLoaded", function() {
-    const input = document.getElementById("imagen");
-    const preview = document.getElementById("posterPreview");
+document.addEventListener("DOMContentLoaded", function () {
+    const paresDeVistaPrevia = [
+        { inputId: "imagen", previewId: "posterPreview" },
+        { inputId: "profilePhoto", previewId: "profilePhotoPreview" }
+    ];
 
-    if (!input || !preview) return;
+    paresDeVistaPrevia.forEach(function (par) {
+        const input = document.getElementById(par.inputId);
+        const preview = document.getElementById(par.previewId);
 
-    input.addEventListener("change", function() {
-        const archivo = input.files && input.files[0];
-
-        if (!archivo) {
-            preview.removeAttribute("src");
-            preview.hidden = true;
+        // Si esta página no tiene esos elementos, pasa al siguiente par.
+        if (!input || !preview) {
             return;
         }
 
-        const lector = new FileReader();
+        input.addEventListener("change", function () {
+            const archivo = input.files && input.files[0];
 
-        lector.addEventListener("load", function() {
-            if (typeof lector.result !== "string") return;
+            if (!archivo) {
+                preview.removeAttribute("src");
+                preview.hidden = true;
+                return;
+            }
 
-            preview.src = lector.result;
-            preview.hidden = false;
+            const lector = new FileReader();
+
+            lector.addEventListener("load", function () {
+                if (typeof lector.result !== "string") {
+                    return;
+                }
+
+                preview.src = lector.result;
+                preview.hidden = false;
+            });
+
+            lector.readAsDataURL(archivo);
         });
-
-        lector.readAsDataURL(archivo);
     });
 });
 

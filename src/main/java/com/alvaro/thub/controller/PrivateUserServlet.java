@@ -34,11 +34,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
+/*
  * Servlet que recibe las peticiones de la parte privada de la web (la que requiere que el usuario este logueado)
  */
 @WebServlet("/Private/User")
 public class PrivateUserServlet extends HttpServlet {
+	
 	private static Logger logger = LogManager.getLogger(PrivateUserServlet.class);
 	
 	private UserService userService = null;
@@ -75,16 +76,18 @@ public class PrivateUserServlet extends HttpServlet {
 		// si llega hasta aqui, es que el usuario esta logueado, ya que el filtro AuthenticationFilter se encarga de redirigir al login si no lo esta
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 		
-		// ACCIÓN: MOSTRAR PERFIL -----------------------------------------------------------------------
-		if ("showProfile".equalsIgnoreCase(action)) {
-
+		/* ===========================================================================================================================================
+		 *                                                   ACCION = MOSTRAR PERFIL USUARIO
+		============================================================================================================================================*/
+		if (ConstantsUtils.USER_ACTION_SHOW_PROFILE.equalsIgnoreCase(action)) {
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 			return; 
-
-				 
-		// ACCIÓN: ACTUALIZAR DATOS PERSONALES -----------------------------------------------------------
-		} else if ("updateProfile".equalsIgnoreCase(action)) {
+			 
+		/* ===========================================================================================================================================
+		 *                                                   ACCION = ACTUALIZAR PERFIL USUARIO
+		============================================================================================================================================*/
+		} else if (ConstantsUtils.USER_ACTION_UPDATE_PROFILE.equalsIgnoreCase(action)) {
 			
 			// pilla los valores que el usuario meta en el formulario de perfil
 			String idStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
@@ -101,6 +104,7 @@ public class PrivateUserServlet extends HttpServlet {
 			try {
 				// crea un nuevo objeto UserDTO con los datos actualizados
 				UserDTO userToUpdate = new UserDTO();
+				
 				userToUpdate.setId(Long.valueOf(idStr));
 				userToUpdate.setDni(dni);
 				userToUpdate.setName(name);
@@ -112,9 +116,7 @@ public class PrivateUserServlet extends HttpServlet {
 				userToUpdate.setRolName(user.getRolName());
 				userToUpdate.setPassword(user.getPassword());
 				
-				// como en la base de datos y el dto de usuario la variable de fecha es de tipo date
-				// tenemos que facer este paso intermedio de convertir el string que viene del formulario
-				// a un objeto date, para eso usamos SimpleDateFormat
+				// validaciones
 				if (bornDateStr != null && !bornDateStr.trim().isEmpty()) {
 					try {
 						Date bornDate = new SimpleDateFormat("yyyy-MM-dd").parse(bornDateStr.trim());
@@ -153,21 +155,21 @@ public class PrivateUserServlet extends HttpServlet {
 
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
-
-			
-			
-		// ACCIÓN: ACTUALIZAR CONTRASEÑA ----------------------------------------------------------------
-		} else if ("updatePassword".equalsIgnoreCase(action)) {
+		
+		/* ===========================================================================================================================================
+		 *                                                   ACCION = ACTUALIZAR CONTRASEÑA
+		============================================================================================================================================*/
+		} else if (ConstantsUtils.USER_ACTION_UPDATE_PASSWORD.equalsIgnoreCase(action)) {
 			
 			String oldPassword = request.getParameter(ConstantsUtils.REQUEST_PARAM_OLD_PASSWORD);
 			String newPassword = request.getParameter(ConstantsUtils.REQUEST_PARAM_NEW_PASSWORD);
 			String confirmNewPassword = request.getParameter(ConstantsUtils.REQUEST_PARAM_CONFIRM_NEW_PASSWORD);
 			
-			// si la contraseña nueva y la confirmacion no coinciden, mostramos un error y volvemos a la pagina de perfil
+			// si la contraseña nueva y la confirmacion no coinciden, mostramos un error y forward
 			if (newPassword == null || !newPassword.equals(confirmNewPassword)) {
 				cargarDesplegables(request);
-				logger.warn("Las nuevas contraseñas no coinciden para el usuario: " + user.getId());
-				request.setAttribute("error", "Las nuevas contraseñas no coinciden.");
+				logger.warn("Las contraseñas no coinciden para el usuario: " + user.getId());
+				request.setAttribute("error", "Las contraseñas no coinciden.");
 				request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 				return;
 			}
@@ -182,16 +184,17 @@ public class PrivateUserServlet extends HttpServlet {
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
 		} 
-		
-		
-		// ACCIÓN: SUBIR FOTO DE PERFIL -------------------------------------------------------------------
-		else if ("uploadProfilePhoto".equalsIgnoreCase(action)) {
+				
+		/* ===========================================================================================================================================
+		 *                                                   ACCION = SUBIR FOTO DE PERFIL
+		============================================================================================================================================*/
+		else if (ConstantsUtils.USER_ACTION_UPLOAD_PROFILE_PHOTO.equalsIgnoreCase(action)) {
 			
-			// Leemos los bytes de la foto desde la request usando el método leerBytes de WebUtils
+			// Leemos los bytes de la foto de la request usando el método leerBytes de WebUtils (METODO DE FileUpload)
 			byte[] bytesFoto = WebUtils.leerBytes(request, "photo");
 			
-			// si no selecciona nada, enviamos un mensaje de información y volvemos a la página de perfil
-			if (bytesFoto == null || bytesFoto.length == 0) {
+			// si no selecciona nada, enviamos un mensaje de información y recargamos a la página de perfil
+			if (bytesFoto == null || bytesFoto.length <= 0) {
 				cargarDesplegables(request);
 				logger.info("No se seleccionó ninguna foto");
 				request.setAttribute("error", "No se seleccionó ninguna foto.");
@@ -200,38 +203,35 @@ public class PrivateUserServlet extends HttpServlet {
 			}
 			try {
 		        // Guardamos la foto en el servicio de contenido
-		        ContentData c = new ContentData();
 		        ContentMetadata cm = new ContentMetadata();
 		        cm.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
 		        cm.setEntityId(user.getId().toString()); // El ID del usuario logueado
 		        cm.setResourceType(ConstantsUtils.USER_PROFILE_RESOURCE_TYPE);
-		        cm.setFormat(".png"); // TODO: extraer la extensión real en el futuro si lo necesitas
+		        cm.setFormat(".png"); 
 		        
+		        ContentData c = new ContentData();		        
 		        c.setMetadata(cm);
 		        c.setRaw(bytesFoto);
-		        contentService.save(c);
 		        
-		        SessionManager.setAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE, user);
+		        contentService.save(c);
 		        
 		        logger.info("Foto de perfil guardada correctamente para el usuario: " + user.getId());
 		        request.setAttribute("successMessage", "Foto de perfil actualizada con éxito."); // Mensaje de éxito successMessage
 
-		    } catch (ServiceException se) {
-		        logger.error("Error en el servicio al guardar la foto de perfil para el usuario: " + user.getId(), se);
-		        request.setAttribute("error", "Error al guardar la foto de perfil: " + se.getMessage());
-		    } catch (Exception e) {
-		        logger.error("Error inesperado al procesar la foto de perfil para el usuario: " + user.getId(), e);
-		        request.setAttribute("error", "Error inesperado al procesar la imagen.");
-		    }		
+		    } catch (ContentException ce) {
+		        logger.error("Error en el servicio al guardar la foto de perfil para el usuario: " + user.getId(), ce);
+		        request.setAttribute("error", "Error al guardar la foto de perfil");
+		    } 		
 			
 			cargarDesplegables(request);
 			request.getRequestDispatcher(ConstantsUtils.USER_PROFILE).forward(request, response);
-			
-			
-			
-		} else if ("showProfilePhoto".equalsIgnoreCase(action)) {
-		    // ACCION = mostrar la foto de perfil del usuario ----------------------------------------------
-			// primero creamos un objeto ContentMetadata con los metadatos de la imagen de usuario 
+					
+		/* ===========================================================================================================================================
+		 *                                                   ACCION = MOSTRAR FOTO DE PERFIL
+		============================================================================================================================================*/	
+		} else if (ConstantsUtils.USER_ACTION_SHOW_PROFILE_PHOTO.equalsIgnoreCase(action)) {
+		    
+			// primero creo metadata y seteo sus atributos para recuperarla con get
 			ContentMetadata metadata = new ContentMetadata();
 			metadata.setEntityType(ConstantsUtils.USER_ENTITY_TYPE);
 			metadata.setEntityId(user.getId().toString());
@@ -254,14 +254,9 @@ public class PrivateUserServlet extends HttpServlet {
 		
 		}
 	}
-
 	
-	
-	// este metodo se llama cuando el usuario hace un POST, y lo que hace es llamar al doGet, para que se ejecute el mismo codigo que en el doGet
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		doGet(request, response);
 	}
-	
-	
 }

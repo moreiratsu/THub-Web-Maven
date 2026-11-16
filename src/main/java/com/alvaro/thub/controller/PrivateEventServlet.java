@@ -357,9 +357,7 @@ public class PrivateEventServlet extends HttpServlet {
 					try {
 						contentService.save(cartel);
 					} catch (ContentException ce) {
-						logger.error(
-								"El evento " + eventoCreado.getId() + " se creó, pero no se pudo guardar su cartel.",
-								ce);
+						logger.error("El evento " + eventoCreado.getId() + " se creó, pero no se pudo guardar su cartel.",ce);
 					}
 				}
 

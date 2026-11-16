@@ -6,10 +6,19 @@
 <%@ include file="/html/common/header.jsp"%>
 
 <!-- Contenedor Principal -->
-<main class="container"> 
-
+<main class="container"> 	
+	
 	<!-- Sección Izquierda -->
 	<section class="left-content">
+	
+	<!-- VIDEO DE FONDO -->
+    <video class="login-background-video"
+           autoplay muted loop playsinline aria-hidden="true">
+        <source
+            src="${pageContext.request.contextPath}/video/fondo-login.mp4"
+            type="video/mp4">
+    </video>
+	
 		<div class="badge">PLATAFORMA DE TORNEOS DEPORTIVOS</div>
 
 		<div class="hero-header-wrapper">
@@ -28,40 +37,6 @@
 			La herramienta todo en uno para gestionar torneos deportivos: inscripciones, equipos, resultados y clasificaciones desde un solo lugar.
 		</p>
 
-		<!-- Grid de Características -->
-		<div class="features-grid">
-			<div class="feature-card">
-				<span class="feature-icon">🏆</span>
-				<div class="feature-info">
-					<h3>Gestión de torneos</h3>
-					<p>Crea y administra competiciones de cualquier deporte.</p>
-				</div>
-			</div>
-
-			<div class="feature-card">
-				<span class="feature-icon">👥</span>
-				<div class="feature-info">
-					<h3>Equipos y participantes</h3>
-					<p>Inscripciones, plantillas y estadísticas en tiempo real.</p>
-				</div>
-			</div>
-
-			<div class="feature-card">
-				<span class="feature-icon">📅</span>
-				<div class="feature-info">
-					<h3>Calendario integrado</h3>
-					<p>Planifica jornadas, fases y eliminatorias.</p>
-				</div>
-			</div>
-
-			<div class="feature-card">
-				<span class="feature-icon">🏅</span>
-				<div class="feature-info">
-					<h3>Clasificaciones y premios</h3>
-					<p>Resultados automáticos y gestión de premios.</p>
-				</div>
-			</div>
-		</div>
 	</section>
 
 	<!-- Sección Derecha (Panel de Inicio de Sesión) -->
@@ -83,54 +58,6 @@
 		<form class="login-form" action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>" method="POST">
 
 			<input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="login"> 
-			<span class="field-label">ROL</span>
-
-			<div class="role-selector">
-				<label class="role-option">
-					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="3" checked>
-					<span class="radio-custom"></span>
-					<div class="role-text">
-						<strong>Organizador</strong>
-						<p>Crea eventos, equipos, participantes. Gestiona inscripciones y pagos.</p>
-					</div>
-				</label>
-
-				<label class="role-option">
-					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="4">
-					<span class="radio-custom"></span>
-					<div class="role-text">
-						<strong>Deportista</strong>
-						<p>Consulta datos, resultados y estadísticas. Inscríbete en eventos individuales.</p>
-					</div>
-				</label>
-
-				<label class="role-option">
-					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="5">
-					<span class="radio-custom"></span>
-					<div class="role-text">
-						<strong>Entrenador</strong>
-						<p>Gestiona equipos y consulta calendarios.</p>
-					</div>
-				</label>
-
-				<label class="role-option">
-					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="2">
-					<span class="radio-custom"></span>
-					<div class="role-text">
-						<strong>Árbitro</strong>
-						<p>Actualiza resultados de encuentros y partidos.</p>
-					</div>
-				</label>
-
-				<label class="role-option">
-					<input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="6">
-					<span class="radio-custom"></span>
-					<div class="role-text">
-						<strong>Fan</strong>
-						<p>Sigue eventos y equipos en tiempo real.</p>
-					</div>
-				</label>
-			</div>
 
 			<hr class="divider">
 

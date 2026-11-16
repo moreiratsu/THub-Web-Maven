@@ -2121,3 +2121,105 @@ button.action-btn.action-delete:hover {
 .home-event-info {
     padding-top: 4px;
 }
+
+.left-content {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.login-background-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.left-content::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.58);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.left-content > :not(.login-background-video) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Cartas de eventos: cartel como fondo completo */
+.home-event-card {
+    position: relative;
+    height: 360px;
+    padding: 0;
+    overflow: hidden;
+    background: #141517;
+}
+
+.home-event-card .home-event-poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.home-event-card .home-event-poster img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Degradado negro hacia la mitad inferior */
+.home-event-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 35%,
+        rgba(0, 0, 0, 0.25) 52%,
+        rgba(0, 0, 0, 0.94) 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Texto superpuesto en la parte inferior */
+.home-event-card .home-event-info {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    padding: 22px;
+}
+
+.home-event-card .home-event-info h3,
+.home-event-card .home-event-info p,
+.home-event-card .home-event-info a {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.home-event-card .home-event-info h3 {
+    margin-top: 0;
+    color: #fff;
+}
+
+.home-event-card .home-event-info p {
+    min-height: 0;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* Fondo negro solo en el inicio */
+.content-area.home-content {
+    background-image: none;
+    background-color: rgb(23, 23, 23);
+}

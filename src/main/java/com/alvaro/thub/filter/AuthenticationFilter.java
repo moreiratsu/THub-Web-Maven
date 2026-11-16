@@ -36,18 +36,14 @@ public class AuthenticationFilter extends HttpFilter implements Filter {
 		// a traves del SessionManager obtenemos el usuario logueado de la sesion, si no hay usuario logueado, devuelve null
 		UserDTO user = (UserDTO) SessionManager.getAttribute(request, ConstantsUtils.USER_SESSION_ATTRIBUTE);
 
-		if (user != null) {
-			// si el usuario esta logueado, se le permite acceder a la parte privada
-			// pasa la request a traves del filtro
-			chain.doFilter(request, response);
+		if (user != null) { // si el usuario esta logueado
+			chain.doFilter(request, response); // significa: esta petición puede continuar
 		} else {
-			// En este caso el usuario no esta logueado, se le redirige a la pagina de login PERO POR FUERA DEL NAVEGADOR
+			// En este caso el usuario no esta logueado, se le redirige a la pagina de login PERO POR FUERA DEL NAVEGADOR con un redirect
 			// Por dentro seria haciendo un forward, pero eso no es lo que queremos, queremos que el usuario vea la URL de login en el navegador			
 			HttpServletResponse httpResponse = (HttpServletResponse) response;
 			HttpServletRequest httpRequest = (HttpServletRequest) request;
-			httpResponse.sendRedirect( // que la respuesta sea un redirect a la pagina de login
-			    httpRequest.getContextPath() + ConstantsUtils.USER_LOGIN // getContextPath() devuelve el nombre de la aplicacion, para que no importe si se despliega en un contexto diferente al de desarrollo
-				);
+			httpResponse.sendRedirect( httpRequest.getContextPath() + ConstantsUtils.USER_LOGIN);
 		}
 	}
 	

@@ -10,6 +10,15 @@
  
 	<!-- Sección Izquierda (Informativa / Hero) -->
 	<section class="left-content">
+	
+	<!-- VIDEO DE FONDO -->
+    <video class="login-background-video"
+           autoplay muted loop playsinline aria-hidden="true">
+        <source
+            src="${pageContext.request.contextPath}/video/fondo-login.mp4"
+            type="video/mp4">
+    </video>
+    
 		<div class="badge">ÚNETE A LA PLATAFORMA</div>
 
 		<div class="hero-header-wrapper">
@@ -29,24 +38,6 @@
 			torneos, inscribir tus equipos o participar como deportista en
 			nuestras competiciones.</p>
 
-		<!-- Grid de Características -->
-		<div class="features-grid">
-			<div class="feature-card">
-				<span class="feature-icon">🛡️</span>
-				<div class="feature-info">
-					<h3>Perfil personalizado</h3>
-					<p>Acceso a tu panel según tu rol en la plataforma.</p>
-				</div>
-			</div>
-
-			<div class="feature-card">
-				<span class="feature-icon">⚡</span>
-				<div class="feature-info">
-					<h3>Inscripciones rápidas</h3>
-					<p>Únete a eventos y torneos en cuestión de clics.</p>
-				</div>
-			</div>
-		</div>
 	</section>
 
 	<!-- Sección Derecha (Formulario de Registro) -->
@@ -71,38 +62,6 @@
 			action="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_USER_SERVLET %>" method="POST">
 
 			<input type="hidden" name="<%= ConstantsUtils.REQUEST_PARAM_ACTION %>" value="register">
-
-			<!-- Selector de Rol -->
-<span class="field-label">SELECCIONA TU ROL</span>
-
-<div class="role-selector">
-  <label class="role-option">
-    <input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="3" checked>
-    <span class="radio-custom"></span>
-    <div class="role-text">
-      <strong>Organizador</strong>
-      <p>Gestiona torneos, inscripciones y eventos.</p>
-    </div>
-  </label>
-
-  <label class="role-option">
-    <input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="4">
-    <span class="radio-custom"></span>
-    <div class="role-text">
-      <strong>Deportista / Participante</strong>
-      <p>Inscríbete en eventos y consulta tus estadísticas.</p>
-    </div>
-  </label>
-
-  <label class="role-option">
-    <input type="radio" name="<%= ConstantsUtils.REQUEST_PARAM_ROL_ID %>" value="5">
-    <span class="radio-custom"></span>
-    <div class="role-text">
-      <strong>Entrenador</strong>
-      <p>Crea y gestiona equipos.</p>
-    </div>
-  </label>
-</div>
 
 			<hr class="divider">
 

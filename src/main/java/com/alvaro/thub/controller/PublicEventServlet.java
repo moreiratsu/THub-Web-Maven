@@ -131,12 +131,16 @@ public class PublicEventServlet extends HttpServlet {
 		}
 		switch (action) {
 
-		// Accion = mostrar la vista de busqueda con resultados
+		/* ======================================================================================================================================
+		 *                                      Accion = mostrar la vista de busqueda con resultados
+		========================================================================================================================================= */
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_SEARCH:
 		    response.sendRedirect(response.encodeRedirectURL(request.getContextPath()+ ConstantsUtils.PUBLIC_EVENT_SERVLET+ "?"+ ConstantsUtils.REQUEST_PARAM_ACTION + "=" + ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH));
 		    return;
 
-		// Accion = "search"
+		/* ===========================================================================================================================================
+		 *                                                         Accion = "BUSCAR EVENTO"
+		=========================================================================================================================================== */
 		case ConstantsUtils.REQUEST_EVENT_ACTION_SEARCH:
 			cargarDesplegables(request);
 			// 1. Lectura de parámetros de la petición
@@ -239,7 +243,9 @@ public class PublicEventServlet extends HttpServlet {
 			request.getRequestDispatcher(ConstantsUtils.EVENT_SEARCH).forward(request, response);
 			break;
 
-		// Accion = "detail"
+		/* ===========================================================================================================================================
+		 *                                                             Accion = "DETALLE DE EVENTO"
+		=========================================================================================================================================== */
 		case ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL:
 
 			// primero recibimos el id de la request (cuando el usuario por ejemplo le da al
@@ -271,7 +277,10 @@ public class PublicEventServlet extends HttpServlet {
 			}
 			break;
 
-		case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP:
+			/* ===========================================================================================================================================
+			 *                                                             Accion = "MOSTRAR CARTEL"
+			=========================================================================================================================================== */
+			case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_LINEUP:
 		    String idEvento =
 		            request.getParameter(ConstantsUtils.REQUEST_PARAM_ID);
 
@@ -321,7 +330,9 @@ public class PublicEventServlet extends HttpServlet {
 		    }
 		    return;		
 		
-		
+		/* ===========================================================================================================================================
+		 *                                               ACCION = MOSTRAR 3 ÚLTIMOS EVENTOS
+		 ===========================================================================================================================================*/
 			case ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_RECENT_EVENTS: {
 			    try {
 			        EventCriteria criteria2 = new EventCriteria();
@@ -334,7 +345,7 @@ public class PublicEventServlet extends HttpServlet {
 			        Results<EventDTO> resultados =
 			                eventService.findBy(criteria2, 1, 3);
 
-			        // La JSP recibirá esta lista para pintar las tarjetas.
+			        // La JSP recibirá esta lista para pintar las tarjetas. (aqui en el sevlet dejo la lista preparada en la peticion)
 			        request.setAttribute("eventosRecientes", resultados.getPage());
 			        
 			    } catch (ServiceException se) {

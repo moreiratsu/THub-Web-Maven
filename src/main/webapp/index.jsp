@@ -1,11 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
 <%@ page import="java.util.List, com.alvaro.thub.model.EventDTO" %>
 
 <jsp:include page='<%= "/Public/Event?action=showRecentEvents" %>' />
 
 <%
-List<EventDTO> eventosRecientes =
-        (List<EventDTO>) request.getAttribute("eventosRecientes");
+List<EventDTO> eventosRecientes = (List<EventDTO>) request.getAttribute("eventosRecientes"); // recupero la lista de eventosrecientes que me deja prepara el servlet
 %>
 
 <!-- HEADER -->
@@ -22,7 +22,7 @@ List<EventDTO> eventosRecientes =
 
 
 <!-- CONTENIDO PRINCIPAL -->
-<main class="content-area">
+<main class="content-area home-content">
 <section class="home-hero" aria-labelledby="home-title">
     <div class="home-hero-content">
         <span class="home-eyebrow">EL DEPORTE SE VIVE EN COMPAÑÍA</span>
@@ -59,8 +59,8 @@ List<EventDTO> eventosRecientes =
 
     <div class="home-sport-grid">
        <%
-if (eventosRecientes != null && !eventosRecientes.isEmpty()) {
-    for (EventDTO evento : eventosRecientes) {
+if (eventosRecientes != null && !eventosRecientes.isEmpty()) { // compruebo si hay eventos
+    for (EventDTO evento : eventosRecientes) { // creo una tarjeta por cada uno
 %>
     <article class="home-sport-card home-event-card">
         <div class="home-event-poster">
@@ -74,9 +74,6 @@ if (eventosRecientes != null && !eventosRecientes.isEmpty()) {
             <h3><%= evento.getName() %></h3>
             <p>Inicio:
                 <%= evento.getStartDate() != null ? evento.getStartDate() : "Sin fecha" %>
-            </p>
-            <p>Formato:
-                <%= evento.getFormatName() != null ? evento.getFormatName() : "Sin formato" %>
             </p>
 
             <a href="${pageContext.request.contextPath}<%= ConstantsUtils.PUBLIC_EVENT_SERVLET %>?<%= ConstantsUtils.REQUEST_PARAM_ACTION %>=<%= ConstantsUtils.REQUEST_EVENT_ACTION_DETAIL %>&<%= ConstantsUtils.REQUEST_PARAM_ID %>=<%= evento.getId() %>">

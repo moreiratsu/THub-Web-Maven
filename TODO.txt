@@ -9,7 +9,7 @@ LISTA DE COSAS PENDIENTES:
  
  PENSAR EN SI CAMBIAR LOS DATOS OBLIGATORIOS PARA EL REGISTRO DE USUARIO, YA QUE AHORA MISMO SON TODOS LOS CAMPOS OBLIGATORIOS Y NO ES LO MAS ADECUADO, YA QUE HAY CAMPOS QUE NO SON OBLIGATORIOS COMO EL TELEFONO, LA FECHA DE NACIMIENTO, ETC.
  
- TENGO QUE HACER QUE EN EL BUSCADOR DE EVENTOS, BUSCAR A UN USUARIO SE APOR TEXTO , NO POR LISTA FIND ALL O ALGO ASI
+ TENGO QUE HACER QUE EN EL BUSCADOR DE EVENTOS, BUSCAR A UN USUARIO SEA POR TEXTO , NO POR LISTA FIND ALL O ALGO ASI
  
  poner las acciones de los servlet de usuario en constantutils y corregir sus llamadas desde los jsp
  
@@ -31,4 +31,12 @@ cambiar la forma de calcular los estados del inicio y fin de un evento, de forma
 
 - poner previsualizacion de foto de perfil al editarla, y pais y provincia en los campos a rellenar
 
-- cuando no tengo eventos propios y le doy a la opcion dem is eventos me da error 500
+- meter un pull en JDBC
+
+- ARREGLAR EL SISTEMA DE ROLES DEL REGISTRO
+
+-IMPLEMENTAR CALENDARIOS
+
+- Implementar estadisticas
+
+- poner en usuario provincia y pais
