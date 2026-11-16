@@ -1,42 +1,25 @@
 LISTA DE COSAS PENDIENTES:
- 
- EN EL INDEX CARGAR LOS EVENTOS MAS RECIENTES, Y QUE SE PUEDA VER EL DETALLE DE CADA EVENTO, Y QUE SE PUEDA VER LA LISTA DE TODOS LOS EVENTOS.
- VER A MAYORES QUE MAS PUEDO PONER EN EL INDEX PARA QUE SEA MAS ATRACTIVO, COMO POR EJEMPLO UN SLIDER DE IMAGENES, O UN SLIDER DE EVENTOS, O UN SLIDER DE NOTICIAS, ETC.
- 
+  
  DENTRO DE MI APLICACION WEB, POR EJEMPLO EN EL JSP DE EVENTOS, QUIERO QUE HAYA UN BOTON DE FILTRO PARA QUE EL USUARIO PUEDA ELEGIR SI VER LOS EVENTOS EN UNA LISTA O EN CAPSULAS
  
  SERIA BUENA IDEA SEPARAR EL POJO Y EL DTO DE USUARIO, YA QUE EL DTO ES EL QUE SE USA PARA PASAR DATOS ENTRE CAPAS Y EL POJO ES EL QUE REPRESENTA LA ENTIDAD EN LA BASE DE DATOS Y REVISAR QUE DATOS DE REGISTRO SON OBLIGATORIOS Y CUALES NO, YA QUE AHORA MISMO TODOS LOS CAMPOS SON OBLIGATORIOS Y NO ES LO MAS ADECUADO, YA QUE HAY CAMPOS QUE NO SON OBLIGATORIOS COMO EL TELEFONO, LA FECHA DE NACIMIENTO, ETC. Y A MAYORES VER CUALES SON LOS CAMPOS QUE QUIERO TENER EN USUARIO.
- 
- PENSAR EN SI CAMBIAR LOS DATOS OBLIGATORIOS PARA EL REGISTRO DE USUARIO, YA QUE AHORA MISMO SON TODOS LOS CAMPOS OBLIGATORIOS Y NO ES LO MAS ADECUADO, YA QUE HAY CAMPOS QUE NO SON OBLIGATORIOS COMO EL TELEFONO, LA FECHA DE NACIMIENTO, ETC.
- 
- TENGO QUE HACER QUE EN EL BUSCADOR DE EVENTOS, BUSCAR A UN USUARIO SEA POR TEXTO , NO POR LISTA FIND ALL O ALGO ASI
- 
- poner las acciones de los servlet de usuario en constantutils y corregir sus llamadas desde los jsp
- 
+  
+ TENGO QUE HACER QUE EN EL BUSCADOR DE EVENTOS, BUSCAR A UN organizador SEA POR TEXTO , NO POR LISTA FIND ALL O ALGO ASI
+  
  tengo que quitar el campo id de busqueda de eventos ya que no es un campo para usuarios habituales si no que solo seria para un administrador de lsistema
- 
- logicamente tengo que controlar en los ESTADOS de los eventos las fechas ya que si un evento llega a su fecha de fin, tiene que pasar automaticamente de en curso a finalizado.
- 
+  
  Dentro de la vista detalle de eventos en el futuro tengo que poner los resultados, los equipos y participantes que tiene ese evento, y mas datos y detalles.
  
- añadir mas campos al formulario de creacion de evento deporte, instalación, precio, participantes y descripción
+ añadir mas campos al formulario de creacion de evento deporte, instalación, precio, participantes, descripción...
  
-cambiar la forma de calcular los estados del inicio y fin de un evento, de forma que el usuario crador del mismotenga dos bpotones uno para iniciar el evento y otro para finzalizarlo a cancelarlo, el estado guardara esa informacion.
-
-- En el futuro molaría que cuando un Organizador cambie el Estado de un Evento, le mande un correo avisando a todos los Participantes que tenga asociados.
+- En el middleware tengo implementado que cuando un usuario se registra o un evento en el que está cambia de estado se le manda un correo, tengo que perfeccionar esos correos.
 
 -Poner filtros de orden en la búsqueda. Poder filtrar por orden alfabetico, numerico (ids), fechas proximas.
 
 - PONER QUE EL OJO DE PASSWORD MUESTRE LA PASS MOMENTANEAMENTE
 
-- poner previsualizacion de foto de perfil al editarla, y pais y provincia en los campos a rellenar
-
-- meter un pull en JDBC
-
-- ARREGLAR EL SISTEMA DE ROLES DEL REGISTRO
+- poner pais y provincia en los campos a rellenar en el perfil usuario.
 
 -IMPLEMENTAR CALENDARIOS
 
 - Implementar estadisticas
-
-- poner en usuario provincia y pais
