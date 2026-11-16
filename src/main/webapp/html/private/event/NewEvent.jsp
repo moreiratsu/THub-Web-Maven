@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8"%>
 
 <%@ page import="java.util.List"%>
 <%@ page import="com.alvaro.thub.model.Country"%>
@@ -7,7 +7,7 @@
 <%@ page import="com.alvaro.thub.model.LocalityDTO"%>
 <%@ page import="com.alvaro.thub.model.ProvinceDTO"%>
 <%@ page import="com.alvaro.thub.utils.ConstantsUtils"%>
-
+<%@ page import="com.alvaro.thub.model.Sport"%>
 <%@ include file="/html/common/header.jsp"%>
 <%@ include file="/html/common/topbar.jsp"%>
 
@@ -39,6 +39,8 @@ List<LocalityDTO> localidades =
         (List<LocalityDTO>) request.getAttribute("localidades");
 List<Format> formatos =
         (List<Format>) request.getAttribute("formatos");
+List<Sport> deportes =
+(List<Sport>) request.getAttribute("deportes");
 
 // Dirección para volver a la lista de eventos.
 String urlEventos = request.getContextPath()
@@ -51,234 +53,197 @@ String urlEventos = request.getContextPath()
 
 <div class="dashboard-layout">
 
-    <%@ include file="/html/common/asidebar.jsp"%>
+	<%@ include file="/html/common/asidebar.jsp"%>
 
-    <main class="content-area">
+	<main class="content-area">
 
-        <div class="page-header">
-            <h1 class="section-title">Crear evento</h1>
+		<div class="page-header">
+			<h1 class="section-title">Crear evento</h1>
 
-            <a class="role-badge" href="<%=urlEventos%>">
-                Volver a eventos
-            </a>
-        </div>
+			<a class="role-badge" href="<%=urlEventos%>"> Volver a eventos </a>
+		</div>
 
-        <% if (errorMessage != null && !errorMessage.isEmpty()) { %>
-            <div class="error-banner">
-                <%=errorMessage%>
-            </div>
-        <% } %>
+		<% if (errorMessage != null && !errorMessage.isEmpty()) { %>
+		<div class="error-banner">
+			<%=errorMessage%>
+		</div>
+		<% } %>
 
-        <section class="search-card">
-            <h2 class="section-title">Información del evento</h2>
+		<section class="search-card">
+			<h2 class="section-title">Información del evento</h2>
 
-            <form id="eventCreateForm"
-                  action="${pageContext.request.contextPath}<%=ConstantsUtils.PRIVATE_EVENT_SERVLET%>"
-                  method="POST"
-                  enctype="multipart/form-data"
-                  data-show-create-action="<%=ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE%>">
+			<form id="eventCreateForm"
+				action="${pageContext.request.contextPath}<%=ConstantsUtils.PRIVATE_EVENT_SERVLET%>"
+				method="POST" enctype="multipart/form-data"
+				data-show-create-action="<%=ConstantsUtils.REQUEST_EVENT_ACTION_SHOW_CREATE%>">
 
-                <input type="hidden"
-                       name="<%=ConstantsUtils.REQUEST_PARAM_ACTION%>"
-                       value="<%=ConstantsUtils.REQUEST_EVENT_ACTION_CREATE%>">
+				<input type="hidden" name="<%=ConstantsUtils.REQUEST_PARAM_ACTION%>"
+					value="<%=ConstantsUtils.REQUEST_EVENT_ACTION_CREATE%>">
 
-                <div class="input-group">
-                    <label for="imagen" class="field-label">
-                        Cartel del evento
-                    </label>
+				<div class="input-group">
+					<label for="imagen" class="field-label"> Cartel del evento
+					</label> <input type="file" id="imagen" name="imagen" class="form-control"
+						accept=".png" aria-describedby="imageHelp"> <small
+						id="imageHelp">Formatos permitidos: PNG, JPG Y JPEG.</small> <img
+						id="posterPreview" class="event-poster-preview"
+						alt="Vista previa del cartel" hidden>
+				</div>
 
-                    <input type="file"
-                           id="imagen"
-                           name="imagen"
-                           class="form-control"
-                           accept=".png"
-                           aria-describedby="imageHelp">
+				<div class="filter-grid">
 
-                    <small id="imageHelp">Formatos permitidos: PNG, JPG Y JPEG.</small>
+					<div class="input-group">
+						<label for="eventName" class="field-label"> Nombre del
+							evento * </label> <input type="text" id="eventName"
+							name="<%=ConstantsUtils.REQUEST_PARAM_NAME%>"
+							class="form-control" required placeholder="Ej.: Torneo de fútbol"
+							value="<%=nombreIntroducido == null ? "" : nombreIntroducido%>">
+					</div>
 
-                    <img id="posterPreview"
-                         class="event-poster-preview"
-                         alt="Vista previa del cartel"
-                         hidden>
-                </div>
+					<div class="input-group">
+						<label for="formatId" class="field-label"> Formato * </label> <select
+							id="formatId" name="<%=ConstantsUtils.REQUEST_PARAM_FORMAT_ID%>"
+							class="form-control" required>
+							<option value="">Selecciona un formato</option>
 
-                <div class="filter-grid">
-
-                    <div class="input-group">
-                        <label for="eventName" class="field-label">
-                            Nombre del evento *
-                        </label>
-
-                        <input type="text"
-                               id="eventName"
-                               name="<%=ConstantsUtils.REQUEST_PARAM_NAME%>"
-                               class="form-control"
-                               required
-                               placeholder="Ej.: Torneo de fútbol"
-                               value="<%=nombreIntroducido == null ? "" : nombreIntroducido%>">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="formatId" class="field-label">
-                            Formato *
-                        </label>
-
-                        <select id="formatId"
-                                name="<%=ConstantsUtils.REQUEST_PARAM_FORMAT_ID%>"
-                                class="form-control"
-                                required>
-                            <option value="">Selecciona un formato</option>
-
-                            <% if (formatos != null) {
+							<% if (formatos != null) {
                                 for (Format formato : formatos) { %>
-                                    <option value="<%=formato.getId()%>"
-                                        <%=String.valueOf(formato.getId())
+							<option value="<%=formato.getId()%>"
+								<%=String.valueOf(formato.getId())
                                                 .equals(formatoIntroducido)
                                                 ? "selected" : ""%>>
-                                        <%=formato.getName() == null
+								<%=formato.getName() == null
                                                 ? "" : formato.getName()%>
-                                    </option>
-                            <%  }
+							</option>
+							<%  }
                             } %>
-                        </select>
-                    </div>
+						</select>
+					</div>
 
-                    <div class="input-group">
-                        <label for="startDate" class="field-label">
-                            Fecha de inicio *
-                        </label>
+					<div class="input-group">
+						<label for="sportIds" class="field-label"> Deportes * </label> <select
+							id="sportIds" name="sportIds" class="form-control" multiple
+							required>
+							<% if (deportes != null) {
+            for (Sport deporte : deportes) { %>
+							<option value="<%=deporte.getId()%>">
+								<%=deporte.getName()%>
+							</option>
+							<%  }
+        } %>
+						</select> <small>Puedes seleccionar varios deportes.</small>
+					</div>
 
-                        <input type="date"
-                               id="startDate"
-                               name="<%=ConstantsUtils.REQUEST_PARAM_START_DATE%>"
-                               class="form-control"
-                               required
-                               value="<%=fechaInicioIntroducida == null
+					<div class="input-group">
+						<label for="startDate" class="field-label"> Fecha de
+							inicio * </label> <input type="date" id="startDate"
+							name="<%=ConstantsUtils.REQUEST_PARAM_START_DATE%>"
+							class="form-control" required
+							value="<%=fechaInicioIntroducida == null
                                        ? "" : fechaInicioIntroducida%>">
-                    </div>
+					</div>
 
-                    <div id="startDateError" class="error-banner" hidden></div>
+					<div id="startDateError" class="error-banner" hidden></div>
 
-                    <div class="input-group">
-                        <label for="endDate" class="field-label">
-                            Fecha de fin *
-                        </label>
+					<div class="input-group">
+						<label for="endDate" class="field-label"> Fecha de fin * </label>
 
-                        <input type="date"
-                               id="endDate"
-                               name="<%=ConstantsUtils.REQUEST_PARAM_END_DATE%>"
-                               class="form-control"
-                               required
-                               value="<%=fechaFinIntroducida == null
+						<input type="date" id="endDate"
+							name="<%=ConstantsUtils.REQUEST_PARAM_END_DATE%>"
+							class="form-control" required
+							value="<%=fechaFinIntroducida == null
                                        ? "" : fechaFinIntroducida%>">
-                    </div>
+					</div>
 
-                    <div class="input-group">
-                        <label for="createEventCountry" class="field-label">
-                            País *
-                        </label>
+					<div class="input-group">
+						<label for="createEventCountry" class="field-label"> País
+							* </label> <select id="createEventCountry"
+							name="<%=ConstantsUtils.REQUEST_PARAM_COUNTRY_ID%>"
+							class="form-control" required>
+							<option value="">Selecciona un país</option>
 
-                        <select id="createEventCountry"
-                                name="<%=ConstantsUtils.REQUEST_PARAM_COUNTRY_ID%>"
-                                class="form-control"
-                                required>
-                            <option value="">Selecciona un país</option>
-
-                            <% if (paises != null) {
+							<% if (paises != null) {
                                 for (Country pais : paises) { %>
-                                    <option value="<%=pais.getId()%>"
-                                        <%=String.valueOf(pais.getId())
+							<option value="<%=pais.getId()%>"
+								<%=String.valueOf(pais.getId())
                                                 .equals(paisSeleccionado)
                                                 ? "selected" : ""%>>
-                                        <%=pais.getName() == null
+								<%=pais.getName() == null
                                                 ? "" : pais.getName()%>
-                                    </option>
-                            <%  }
+							</option>
+							<%  }
                             } %>
-                        </select>
-                    </div>
+						</select>
+					</div>
 
-                    <div class="input-group">
-                        <label for="createEventProvince" class="field-label">
-                            Provincia
-                        </label>
+					<div class="input-group">
+						<label for="createEventProvince" class="field-label">
+							Provincia </label> <select id="createEventProvince"
+							name="<%=ConstantsUtils.REQUEST_PARAM_PROVINCE_ID%>"
+							class="form-control">
+							<option value="">Selecciona una provincia</option>
 
-                        <select id="createEventProvince"
-                                name="<%=ConstantsUtils.REQUEST_PARAM_PROVINCE_ID%>"
-                                class="form-control">
-                            <option value="">Selecciona una provincia</option>
-
-                            <% if (provincias != null) {
+							<% if (provincias != null) {
                                 for (ProvinceDTO provincia : provincias) { %>
-                                    <option value="<%=provincia.getId()%>"
-                                        <%=String.valueOf(provincia.getId())
+							<option value="<%=provincia.getId()%>"
+								<%=String.valueOf(provincia.getId())
                                                 .equals(provinciaSeleccionada)
                                                 ? "selected" : ""%>>
-                                        <%=provincia.getName() == null
+								<%=provincia.getName() == null
                                                 ? "" : provincia.getName()%>
 
-                                        <% if (provincia.getCountryName() != null) { %>
-                                            (<%=provincia.getCountryName()%>)
-                                        <% } %>
-                                    </option>
-                            <%  }
+								<% if (provincia.getCountryName() != null) { %> (<%=provincia.getCountryName()%>)
+								<% } %>
+							</option>
+							<%  }
                             } %>
-                        </select>
-                    </div>
+						</select>
+					</div>
 
-                    <div class="input-group">
-                        <label for="createEventLocality" class="field-label">
-                            Localidad
-                        </label>
+					<div class="input-group">
+						<label for="createEventLocality" class="field-label">
+							Localidad </label> <select id="createEventLocality"
+							name="<%=ConstantsUtils.REQUEST_PARAM_LOCALITY_ID%>"
+							class="form-control">
+							<option value="">Selecciona una localidad</option>
 
-                        <select id="createEventLocality"
-                                name="<%=ConstantsUtils.REQUEST_PARAM_LOCALITY_ID%>"
-                                class="form-control">
-                            <option value="">Selecciona una localidad</option>
-
-                            <% if (localidades != null) {
+							<% if (localidades != null) {
                                 for (LocalityDTO localidad : localidades) { %>
-                                    <option value="<%=localidad.getId()%>"
-                                        <%=String.valueOf(localidad.getId())
+							<option value="<%=localidad.getId()%>"
+								<%=String.valueOf(localidad.getId())
                                                 .equals(localidadSeleccionada)
                                                 ? "selected" : ""%>>
-                                        <%=localidad.getName() == null
+								<%=localidad.getName() == null
                                                 ? "" : localidad.getName()%>
 
-                                        <% if (localidad.getProvinceName() != null) { %>
-                                            (<%=localidad.getProvinceName()%>)
-                                        <% } %>
-                                    </option>
-                            <%  }
+								<% if (localidad.getProvinceName() != null) { %> (<%=localidad.getProvinceName()%>)
+								<% } %>
+							</option>
+							<%  }
                             } %>
-                        </select>
-                    </div>
+						</select>
+					</div>
 
-                </div>
+				</div>
 
-                <div class="search-card event-organizer">
-                    <p>
-                        <strong>Organizador:</strong>
-                        <%=usuario.getName() == null ? "" : usuario.getName()%>
-                        <%=usuario.getLastName1() == null
+				<div class="search-card event-organizer">
+					<p>
+						<strong>Organizador:</strong>
+						<%=usuario.getName() == null ? "" : usuario.getName()%>
+						<%=usuario.getLastName1() == null
                                 ? "" : usuario.getLastName1()%>
-                    </p>
-                </div>
+					</p>
+				</div>
 
-                <div class="form-actions event-create-actions">
-                    <a class="register-btn" href="<%=urlEventos%>">
-                        Cancelar
-                    </a>
+				<div class="form-actions event-create-actions">
+					<a class="register-btn" href="<%=urlEventos%>"> Cancelar </a>
 
-                    <button type="submit" class="btn-primary">
-                        Crear evento
-                    </button>
-                </div>
+					<button type="submit" class="btn-primary">Crear evento</button>
+				</div>
 
-            </form>
-        </section>
+			</form>
+		</section>
 
-    </main>
+	</main>
 </div>
 
 <%@ include file="/html/common/footer.jsp"%>

@@ -33,8 +33,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.List;
 
+import java.util.ArrayList;
+import java.util.List;
+import com.alvaro.thub.model.Sport;
+import com.alvaro.thub.service.SportService;
+import com.alvaro.thub.service.impl.SportServiceImpl;
 import com.alvaro.thub.model.LocalityDTO;
 import com.alvaro.thub.model.ProvinceDTO;
 import com.alvaro.thub.service.LocalityService;
@@ -76,6 +80,7 @@ public class PrivateEventServlet extends HttpServlet {
 	private CountryService countryService = null;
 	private FormatService formatService = null;
 	private StatusService statusService = null;
+	private SportService sportService = null;
 
 	public PrivateEventServlet() {
 		super();
@@ -86,7 +91,7 @@ public class PrivateEventServlet extends HttpServlet {
 		this.contentService = new ContentServiceFileImpl();
 		this.formatService = new FormatServiceImpl();
 		this.statusService = new StatusServiceImpl();
-
+		this.sportService = new SportServiceImpl();
 	}
 
 
@@ -111,14 +116,15 @@ public class PrivateEventServlet extends HttpServlet {
 			}
 
 			List<ProvinceDTO> provincias = provinceService.findByCountry(countryId);
-
 			List<LocalityDTO> localidades = localityService.findByProvinceId(provinceId);
-
+			List<Sport> deportes = sportService.findAll();
+			
+			request.setAttribute("deportes", deportes);
 			request.setAttribute("formatos", formatList);
 			request.setAttribute("paises", paises);
 			request.setAttribute("provincias", provincias);
 			request.setAttribute("localidades", localidades);
-
+			
 		} catch (ServiceException se) {
 			logger.error("Error al cargar los desplegables", se);
 		}
@@ -213,7 +219,28 @@ public class PrivateEventServlet extends HttpServlet {
 			String paisIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
 			String provinciaIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 			String localidadIdTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+			String[] sportIdsTexto = request.getParameterValues("sportIds");
+			
+			List<Long> sportIds = new ArrayList<>();
 
+			if (sportIdsTexto != null) {
+			    try {
+			        for (String sportIdTexto : sportIdsTexto) {
+			            sportIds.add(Long.valueOf(sportIdTexto));
+			        }
+			    } catch (NumberFormatException e) {
+			        volverAlFormularioConError(
+			                request, response, "La selección de deportes no es válida.");
+			        return;
+			    }
+			}
+
+			if (sportIds.isEmpty()) {
+			    volverAlFormularioConError(
+			            request, response, "Selecciona al menos un deporte.");
+			    return;
+			}
+			
 			// 3. Valido que no vengan vacios, tengan formato correcto y no sean null
 			if (fechaInicioTexto == null || fechaInicioTexto.isBlank()) {
 				volverAlFormularioConError(request, response, "Debes indicar la fecha de inicio.");
@@ -240,7 +267,7 @@ public class PrivateEventServlet extends HttpServlet {
 							"La fecha de fin no puede ser anterior a la fecha de inicio.");
 					return;
 				}
-
+				
 				if (nombreEvento == null || nombreEvento.isBlank() || formatoIdTexto == null || formatoIdTexto.isBlank()
 						|| paisIdTexto == null || paisIdTexto.isBlank()) {
 					// dejo que los unicos campos que puedan ser null sean provincia y localidad
@@ -334,7 +361,7 @@ public class PrivateEventServlet extends HttpServlet {
 
 				// 7. Usamos el servicio para crear el objeto con la plantilla que hemos hecho
 				// de evento
-				EventDTO eventoCreado = eventService.create(nuevoEvento);
+				EventDTO eventoCreado = eventService.create(nuevoEvento, sportIds);
 
 				// 8. Hacemos los checkeos por si ha pasado algo
 				if (eventoCreado == null || eventoCreado.getId() == null) {
