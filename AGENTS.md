@@ -524,3 +524,70 @@
 - El usuario solicita una versión completa de la JSP de creación de evento simplificada y estilos separados. Se preparará solo como código para que el usuario lo revise/pegue; no editar archivos de aplicación.
 - Conservar: @MultipartConfig/acción POST multipart, hidden name/value action, form id eventCreateForm y data-show-create-action usados por JS; bucles de combos y valores tras error. Eliminar solo id no usado del hidden, corregir for de País/Provincia/Localidad para que coincidan con los IDs createEvent*, escapar todas las salidas dinámicas y retirar br/estilos inline de acciones.
 - CSS separado: extraer únicamente margin/gap de acciones y ajustes de botones desde inline styles a reglas aisladas de #eventCreateForm; respetar el CSS existente. Mantener opción PNG coherente con el formulario actual; no editar servlet ni JS.
+
+### AJAX de provincias en EventSearch y registro de trabajo (2026-11-18)
+- Se revisó EventSearch.jsp junto con ProvinceServlet y js.js. Se identificó que ProvinceServlet está mapeado a /province y espera el parámetro id-pais, mientras la JSP apuntaba a /provincia con ruta fija.
+- Se indicó actualizar la URL para usar request.getContextPath() + /province y enviar id-pais; también se encontró un cierre faltante del bloque document.ready en el script inline. El usuario confirma que la corrección ya funciona.
+- Pendiente: aconsejar cómo mover este AJAX a un archivo JavaScript externo, considerando que header.jsp carga js.js y jQuery en ese orden.
+- No se modificó código de la aplicación; esta entrada solo documenta la sesión.
+
+### AJAX de localidades con el patrón jQuery existente (2026-11-18)
+- El usuario creó LocalityServlet para devolver localidades como JSON a partir de provinceId.
+- La primera propuesta del script usó un listener vanilla diferente al AJAX de provincias ya presente. Se reconoce el desajuste y la guía se corrige para mantener el patrón jQuery existente: document.ready, evento change y $.ajax.
+- No se modificó código de la aplicación.
+
+### Consulta sobre paginación AJAX de eventos (2026-11-18)
+- Se explicó que la paginación puede actualizar solo las filas mediante una petición AJAX que envíe filtros y número de página, y reciba JSON o un fragmento HTML.
+- Recomendación: reutilizar la búsqueda ya implementada en PublicEventServlet y EventService.findBy para evitar duplicar construcción de EventCriteria; exponer una respuesta específica para AJAX y actualizar tbody/indicador desde JavaScript.
+- No se modificó código de aplicación.
+
+
+### Diseño explicado para paginación AJAX de resultados (2026-11-18)
+- Se planteó reutilizar PublicEventServlet y EventService.findBy para paginar sin recargar la página.
+- El navegador enviaría por AJAX los filtros actuales y el número de página; el servlet devolvería un fragmento JSP con filas/paginación; JavaScript reemplazaría tbody e indicador de página.
+- Consideraciones al implementar: conservar el diálogo compartido y usar delegación de eventos para botones de paginación/borrado que se insertan dinámicamente.
+- Es solo explicación/diseño; no se modificó código de aplicación.
+
+
+### Aclaración sobre servlets y AJAX para paginación (2026-11-18)
+- ProvinceServlet se añadió porque no había endpoint que devolviera solo provincias como JSON para el combo dependiente.
+- La búsqueda/paginación ya pasa por PublicEventServlet y EventService.findBy; para AJAX no hace falta otro servlet necesariamente, pero hay que adaptar la respuesta del flujo actual para devolver JSON o un fragmento JSP en vez de la vista completa.
+- No se modificó código.
+
+
+### Alternativa de paginación AJAX sin JSP parcial (2026-11-18)
+- El usuario pregunta si puede evitar crear una JSP nueva. Alternativa: el script pide por AJAX la vista completa existente a PublicEventServlet, la analiza con DOMParser y reemplaza solo tbody y pagination-wrapper.
+- Esto evita recarga/navegación completa, aunque transmite HTML completo; también exige delegar/reconectar listeners tras sustituir botones de paginación y borrado.
+- No se modificó código.
+
+
+### Aclaración: paginación AJAX inline con jQuery (2026-11-18)
+- El usuario aclara que quiere el patrón inline jQuery de los combos, no necesariamente extraer un archivo JavaScript ni crear una JSP parcial.
+- Se explicará el uso de $.ajax con dataType html hacia el formulario de búsqueda existente; la respuesta completa se parsea en el cliente y se reemplazan tbody y pagination-wrapper. Debe usarse delegación de eventos para las flechas de paginación dinámicas.
+- No se modificó código.
+
+
+### Delegación del clic en papeleras tras reemplazar filas por AJAX (2026-11-18)
+- Se explicó que los botones .js-abrir-borrado insertados al paginar no reciben los listeners conectados al cargar el DOM.
+- Solución propuesta: delegar el clic en document con jQuery .on('click', selector, handler), asignar data-event-id al input oculto y abrir el diálogo compartido. El listener fijo de EventDetail puede mantenerse.
+- No se modificó código.
+
+
+### Diferencia entre paginar por AJAX y enviar búsqueda (2026-11-18)
+- El usuario observa que las flechas de paginación ya no recargan la página, mientras el botón Buscar sí. Esto es lo esperado si solo se interceptó el clic de paginación; el formulario conserva su envío GET normal.
+- Si se desea una búsqueda sin recarga, hay que interceptar también el evento submit del formulario y reutilizar la petición AJAX, normalmente empezando por página 1.
+- No se modificó código.
+
+
+### Propuesta para búsqueda de eventos sin recarga (2026-11-18)
+- Se explicó reutilizar una función AJAX actualizarResultados(pagina) tanto desde las flechas de paginación como desde el submit de eventSearchForm.
+- Al enviar nuevos filtros se intercepta submit con preventDefault y se consulta la página 1; las flechas solicitan la página indicada. La respuesta HTML completa se analiza y se reemplazan tbody y pagination-wrapper.
+- No se modificó código.
+
+
+### Revisión de EventSearch.jsp: búsqueda y paginación AJAX (2026-11-18)
+- La JSP ya contiene una función ctualizarResultados(pagina) que envía los filtros del formulario al servlet y sustituye el cuerpo de la tabla y la paginación; el submit del formulario pide la página 1 y los botones de paginación usan delegación de eventos.
+- Se detecta un cierre }); de más al final del script: $(document).ready(...) se cierra dos veces. El usuario debe quitar uno para evitar un error de sintaxis JavaScript.
+- Si js.js todavía conserva el manejador anterior que cambia window.location.href al pulsar paginación, debe quitarse para evitar que recargue la página además de la petición AJAX.
+- Al cambiar país se limpia el combo de provincias, pero no el de localidades; conviene vaciar también localidad para no conservar una localidad de otra provincia.
+- No se modificó código de aplicación.

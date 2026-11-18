@@ -80,6 +80,7 @@ public final class ConstantsUtils {
     public static final String REQUEST_PARAM_USER_ID = "userId";
     public static final String REQUEST_PARAM_CARTEL = "cartel";
     public static final String REQUEST_PARAM_NEW_STATUS = "newStatus";
+    public static final String REQUEST_PARAM_SPORT_ID = "sportId";
     
     /* ------------------------------------------------------------------------------
      *                           ACCIONES DE LOS SERVLETS 

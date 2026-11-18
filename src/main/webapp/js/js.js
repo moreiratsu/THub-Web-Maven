@@ -197,93 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-
-
-// Actualiza provincias y localidades sin recargar la página (AJAX). ---------------------------------------------------------------------
-document.addEventListener("DOMContentLoaded", function() {
-    const form = document.getElementById("eventCreateForm");
-    if (!form) return;
-
-    const countrySelect = document.getElementById("createEventCountry");
-    const provinceSelect = document.getElementById("createEventProvince");
-    const localitySelect = document.getElementById("createEventLocality");
-
-    if (!countrySelect || !provinceSelect || !localitySelect) return;
-
-    function actualizarDesplegables() {
-        const parametros = new URLSearchParams();
-
-        // Pide al servlet la vista de creación con las opciones actualizadas.
-        parametros.set("action", form.dataset.showCreateAction);
-
-        if (countrySelect.value) {
-            parametros.set("countryId", countrySelect.value);
-        }
-
-        if (provinceSelect.value) {
-            parametros.set("provinceId", provinceSelect.value);
-        }
-
-        const url = new URL(form.getAttribute("action"), window.location.href);
-        url.search = parametros.toString();
-
-        // AJAX: pide la respuesta en segundo plano, sin navegar a ella.
-        return fetch(url.toString())
-            .then(function(respuesta) {
-                if (!respuesta.ok) {
-                    throw new Error("No se pudieron cargar las opciones.");
-                }
-
-                return respuesta.text();
-            })
-            .then(function(html) {
-                // Lee el HTML recibido y extrae solo los dos desplegables.
-                const paginaRecibida =
-                    new DOMParser().parseFromString(html, "text/html");
-
-                const provinciasRecibidas =
-                    paginaRecibida.querySelector("#createEventProvince");
-                const localidadesRecibidas =
-                    paginaRecibida.querySelector("#createEventLocality");
-
-                if (!provinciasRecibidas || !localidadesRecibidas) {
-                    throw new Error("No se encontraron los desplegables recibidos.");
-                }
-
-                // Actualiza las opciones sin reemplazar el formulario.
-                provinceSelect.innerHTML = provinciasRecibidas.innerHTML;
-                localitySelect.innerHTML = localidadesRecibidas.innerHTML;
-            });
-    }
-
-    // Al cambiar el país, limpia provincia y localidad y carga sus provincias.
-    countrySelect.addEventListener("change", function() {
-        provinceSelect.innerHTML =
-            '<option value="">Selecciona una provincia</option>';
-        localitySelect.innerHTML =
-            '<option value="">Selecciona una localidad</option>';
-
-        if (countrySelect.value) {
-            actualizarDesplegables().catch(function(error) {
-                console.error("Error al cargar las provincias:", error);
-            });
-        }
-    });
-
-    // Al cambiar la provincia, limpia y carga sus localidades.
-    provinceSelect.addEventListener("change", function() {
-        localitySelect.innerHTML =
-            '<option value="">Selecciona una localidad</option>';
-
-        if (provinceSelect.value) {
-            actualizarDesplegables().catch(function(error) {
-                console.error("Error al cargar las localidades:", error);
-            });
-        }
-    });
-});
-
-
+      
 
 // SCRIPT para la ventanita de borrado de evento --------------------------------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", function () {
@@ -296,15 +210,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Botones de borrar de las filas de búsqueda
-    const botonesDeLaLista =
-        document.querySelectorAll(".js-abrir-borrado");
-
-    botonesDeLaLista.forEach(function (boton) {
-        boton.addEventListener("click", function () {
-            campoIdEvento.value = boton.dataset.eventId;
-            dialogo.showModal();
-        });
-    });
+	$(document).on("click", ".js-abrir-borrado", function () {
+	    campoIdEvento.value = this.dataset.eventId;
+	    dialogo.showModal();
+	}); 
 
     // Botón de borrar de EventDetail.jsp
     const botonDetalle =
@@ -323,18 +232,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-// SCRIPT para la PAGINACION
-document.addEventListener("DOMContentLoaded", function () {
-    const botonesPagina =
-        document.querySelectorAll(".pagination-button[data-pagina]");
 
-    botonesPagina.forEach(function (boton) {
-        boton.addEventListener("click", function () {
-            const url = new URL(window.location.href);
-
-            url.searchParams.set("pagina", boton.dataset.pagina);
-
-            window.location.href = url.toString();
-        });
-    });
-});

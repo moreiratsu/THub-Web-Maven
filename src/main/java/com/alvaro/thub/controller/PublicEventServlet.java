@@ -11,11 +11,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.alvaro.thub.dao.criteria.EventCriteria;
 import com.alvaro.thub.model.ContentData;
-import com.alvaro.thub.model.ContentMetadata;
 import com.alvaro.thub.model.Country;
 import com.alvaro.thub.model.EventDTO;
 import com.alvaro.thub.model.Format;
 import com.alvaro.thub.model.LocalityDTO;
+import com.alvaro.thub.model.Sport;
 import com.alvaro.thub.model.ProvinceDTO;
 import com.alvaro.thub.model.Status;
 import com.alvaro.thub.model.UserDTO;
@@ -29,6 +29,8 @@ import com.alvaro.thub.service.ProvinceService;
 import com.alvaro.thub.service.ServiceException;
 import com.alvaro.thub.service.StatusService;
 import com.alvaro.thub.service.UserService;
+import com.alvaro.thub.service.SportService;
+import com.alvaro.thub.service.impl.SportServiceImpl;
 import com.alvaro.thub.service.impl.ContentServiceFileImpl;
 import com.alvaro.thub.service.impl.CountryServiceImpl;
 import com.alvaro.thub.service.impl.EventServiceImpl;
@@ -57,6 +59,7 @@ public class PublicEventServlet extends HttpServlet {
 	private ProvinceService provinceService = null;
 	private CountryService countryService = null;
 	private ContentService contentService = null;
+	private SportService sportService = null;
 
 	public PublicEventServlet() {
 		super();
@@ -68,6 +71,7 @@ public class PublicEventServlet extends HttpServlet {
 		this.provinceService = new ProvinceServiceImpl();
 		this.countryService = new CountryServiceImpl();
 		this.contentService = new ContentServiceFileImpl();
+		this.sportService = new SportServiceImpl();
 	}
 
 	/**
@@ -102,7 +106,9 @@ public class PublicEventServlet extends HttpServlet {
 			List<UserDTO> organizadores = resultadoUsuarios != null && resultadoUsuarios.getPage() != null
 					? resultadoUsuarios.getPage()
 					: List.of();
-
+			List<Sport> deportes = sportService.findAll();
+			
+			request.setAttribute("deportes", deportes);
 			request.setAttribute("estados", statusList);
 			request.setAttribute("formatos", formatList);
 			request.setAttribute("paises", paises);
@@ -154,6 +160,7 @@ public class PublicEventServlet extends HttpServlet {
 			String countryIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
 			String provinceIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 			String localityIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+			String sportIdStr = request.getParameter(ConstantsUtils.REQUEST_PARAM_SPORT_ID);
 
 			// 2. Creamos un criteria y le asignamos los parámetros de búsqueda
 			EventCriteria criteria = new EventCriteria();
@@ -182,6 +189,9 @@ public class PublicEventServlet extends HttpServlet {
 			}
 			if (localityIdStr != null && !localityIdStr.trim().isEmpty()) {
 				criteria.setLocalityId(Long.valueOf(localityIdStr.trim()));
+			}
+			if (sportIdStr != null && !sportIdStr.trim().isEmpty()) {
+			    criteria.setSportId(Long.valueOf(sportIdStr.trim()));
 			}
 			// Formateador para convertir el String del input HTML (yyyy-MM-dd) a
 			// java.util.Date
@@ -266,8 +276,11 @@ public class PublicEventServlet extends HttpServlet {
 				if (event == null) {
 					response.sendError(HttpServletResponse.SC_NOT_FOUND, "El evento solicitado no existe.");
 					return;
-				}				
-					
+				}
+				
+				List<Sport> deportesEvento = eventService.findSportsByEventId(event.getId());
+
+				request.setAttribute("deportesEvento", deportesEvento);	
 				request.setAttribute(ConstantsUtils.EVENT, event);
 				request.getRequestDispatcher(ConstantsUtils.EVENT_DETAIL).forward(request, response);
 

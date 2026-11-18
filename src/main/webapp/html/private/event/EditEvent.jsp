@@ -3,6 +3,7 @@
 <%@ page import="java.util.List"%>
 <%@ page import="com.alvaro.thub.model.EventDTO"%>
 <%@ page import="com.alvaro.thub.model.Format"%>
+<%@ page import="com.alvaro.thub.model.Sport"%>
 <%@ page import="com.alvaro.thub.model.Country"%>
 <%@ page import="com.alvaro.thub.model.ProvinceDTO"%>
 <%@ page import="com.alvaro.thub.model.LocalityDTO"%>
@@ -37,7 +38,11 @@ private String fechaParaInput(java.util.Date fecha) {
 
 <%
 EventDTO event = (EventDTO) request.getAttribute(ConstantsUtils.EVENT);
+List<Sport> deportes =
+(List<Sport>) request.getAttribute("deportes");
 
+List<Sport> deportesEvento =
+(List<Sport>) request.getAttribute("deportesEvento");
 List<Format> formatos =
         (List<Format>) request.getAttribute("formatos");
 List<Country> paises =
@@ -130,6 +135,32 @@ String successMessage = (String) request.getAttribute("successMessage");
 								<%  }
                                     } %>
 							</select>
+						</div>
+
+						<div class="input-group">
+							<label for="sportIds" class="field-label">Deportes *</label> <select
+								id="sportIds" name="sportIds" class="form-control" multiple
+								required>
+								<% if (deportes != null) {
+            for (Sport deporte : deportes) {
+                boolean seleccionado = false;
+
+                if (deportesEvento != null) {
+                    for (Sport deporteEvento : deportesEvento) {
+                        if (deporte.getId().equals(deporteEvento.getId())) {
+                            seleccionado = true;
+                            break;
+                        }
+                    }
+                }
+        %>
+								<option value="<%=deporte.getId()%>"
+									<%=seleccionado ? "selected" : ""%>>
+									<%=escaparHtml(deporte.getName())%>
+								</option>
+								<%  }
+        } %>
+							</select> <small>Puedes seleccionar varios deportes.</small>
 						</div>
 
 						<div class="input-group">
@@ -245,9 +276,9 @@ String successMessage = (String) request.getAttribute("successMessage");
 						onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/img/event_poster.jpg';">
 
 					<div class="input-group">
-					<br>
-						<label for="imagen" class="field-label"> Cambiar cartel </label> <input
-							type="file" id="imagen" name="imagen" form="eventEditForm"
+						<br> <label for="imagen" class="field-label"> Cambiar
+							cartel </label> <input type="file" id="imagen" name="imagen"
+							form="eventEditForm"
 							accept=".png,.jpg,.jpeg,image/png,image/jpeg"
 							class="form-control">
 					</div>

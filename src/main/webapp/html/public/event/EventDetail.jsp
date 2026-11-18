@@ -2,6 +2,8 @@
 	pageEncoding="UTF-8"%>
 <%@ page import="com.alvaro.thub.model.EventDTO"%>
 <%@ page import="com.alvaro.thub.utils.ConstantsUtils"%>
+<%@ page import="java.util.List"%>
+<%@ page import="com.alvaro.thub.model.Sport"%>
 <%@ include file="/html/common/header.jsp"%>
 <%@ include file="/html/common/topbar.jsp"%>
 
@@ -30,6 +32,8 @@ private String escaparHtml(String texto) {
 %>
 		<%
 EventDTO event = (EventDTO) request.getAttribute(ConstantsUtils.EVENT);
+		
+List<Sport> deportesEvento = (List<Sport>) request.getAttribute("deportesEvento");
 
 if (event != null) {
     String nombreEstado = event.getStatusName() == null
@@ -69,7 +73,27 @@ if (event != null) {
 						<strong>Formato:</strong>
 						<%=event.getFormatName() != null ? event.getFormatName() : "-"%>
 					</p>
+					
+					<p>
+    <strong>Deportes:</strong>
+    <%
+    if (deportesEvento != null && !deportesEvento.isEmpty()) {
+        boolean primerDeporte = true;
 
+        for (Sport deporte : deportesEvento) {
+            if (!primerDeporte) {
+                out.print(", ");
+            }
+
+            out.print(escaparHtml(deporte.getName()));
+            primerDeporte = false;
+        }
+    } else {
+        out.print("-");
+    }
+    %>
+</p>
+					
 					<p>
 						<strong>Fecha de inicio:</strong>
 						<%=event.getStartDate() != null ? event.getStartDate() : "-"%>

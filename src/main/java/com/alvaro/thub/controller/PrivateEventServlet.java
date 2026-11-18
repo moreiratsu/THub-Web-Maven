@@ -447,6 +447,9 @@ public class PrivateEventServlet extends HttpServlet {
 					
 					// y a mayores tambien llena los desplegables
 					request.setAttribute("formatos", formatService.findAll());
+					request.setAttribute("deportes", sportService.findAll());
+					request.setAttribute( "deportesEvento", eventService.findSportsByEventId(evento.getId())
+					);
 					request.setAttribute("paises", countryService.findAll());
 					
 					//aqui saca el desplegable a traves del pais guardado en el evento para pintarlos 
@@ -485,6 +488,31 @@ public class PrivateEventServlet extends HttpServlet {
 					String paisTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_COUNTRY_ID);
 					String provinciaTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 					String localidadTexto = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+					String[] sportIdsTexto = request.getParameterValues("sportIds");
+					List<Long> sportIds = new ArrayList<>();
+
+					try {
+					    if (sportIdsTexto != null) {
+					        for (String sportIdTexto : sportIdsTexto) {
+					            sportIds.add(Long.valueOf(sportIdTexto));
+					        }
+					    }
+					} catch (NumberFormatException e) {
+					    request.setAttribute("error", "La selección de deportes no es válida.");
+					    request.setAttribute(ConstantsUtils.EVENT, evento);
+					    cargarDesplegables(request);
+					    request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+					    return;
+					}
+
+					if (sportIds.isEmpty()) {
+					    request.setAttribute("error", "Selecciona al menos un deporte.");
+					    request.setAttribute(ConstantsUtils.EVENT, evento);
+					    cargarDesplegables(request);
+					    request.getRequestDispatcher(ConstantsUtils.EVENT_EDIT).forward(request, response);
+					    return;
+					}
+					
 					
 					// tambien leemos la imagen si la hay, no la guardamos aun
 					byte[] bytesCartel = null;
@@ -574,7 +602,7 @@ public class PrivateEventServlet extends HttpServlet {
 						eventoActualizado.setStatusId(evento.getStatusId());
 						
 						// Y llamamos al servicio
-						boolean actualizado = eventService.update(eventoActualizado);
+						boolean actualizado = eventService.update(eventoActualizado, sportIds);
 
 						if (!actualizado) { // si algo falla: 
 							request.setAttribute("error", "No se pudieron guardar los cambios.");

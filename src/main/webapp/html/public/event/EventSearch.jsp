@@ -10,6 +10,7 @@
 <%@ page import="com.alvaro.thub.model.ProvinceDTO"%>
 <%@ page import="com.alvaro.thub.model.LocalityDTO"%>
 <%@ page import="com.alvaro.thub.model.UserDTO"%>
+<%@ page import="com.alvaro.thub.model.Sport"%>
 <!-- HEADER -->
 <%@ include file="/html/common/header.jsp"%>
 
@@ -36,12 +37,17 @@
 		String provinciaSeleccionada = request.getParameter(ConstantsUtils.REQUEST_PARAM_PROVINCE_ID);
 
 		String localidadSeleccionada = request.getParameter(ConstantsUtils.REQUEST_PARAM_LOCALITY_ID);
+		
+		String deporteSeleccionado = request.getParameter(ConstantsUtils.REQUEST_PARAM_SPORT_ID);
 
 		List<Status> estados = (List<Status>) request.getAttribute("estados");
 
 		List<Format> formatos = (List<Format>) request.getAttribute("formatos");
 
 		List<UserDTO> organizadores = (List<UserDTO>) request.getAttribute("organizadores");
+		
+		List<Sport> deportes = (List<Sport>) request.getAttribute("deportes");
+
 
 		// paginacion
 		Integer paginaActualRecibida = (Integer) request.getAttribute("paginaActual");
@@ -118,7 +124,26 @@
 							%>
 						</select>
 					</div>
+					
+					<div>
+    <label class="field-label">DEPORTE</label>
+    <select name="<%=ConstantsUtils.REQUEST_PARAM_SPORT_ID%>"
+            class="form-control">
+        <option value="">Todos los deportes</option>
 
+        <% if (deportes != null) {
+            for (Sport deporte : deportes) { %>
+                <option value="<%=deporte.getId()%>"
+                    <%=String.valueOf(deporte.getId())
+                            .equals(deporteSeleccionado)
+                            ? "selected" : ""%>>
+                    <%=deporte.getName()%>
+                </option>
+        <%  }
+        } %>
+    </select>
+</div>
+					
 					<div>
 						<label class="field-label">ORGANIZADOR</label> <select
 							name="<%=ConstantsUtils.REQUEST_PARAM_USER_ID%>"
@@ -419,3 +444,137 @@
 
 <!-- FOOTER -->
 <%@ include file="/html/common/footer.jsp"%>
+
+
+<script>
+$(document).ready(function () {
+	
+    $("#eventCountry").on("change", function () {    
+        let idPais = $(this).val();
+        // Limpiamos el select de provincias
+        $("#eventProvince")
+            .empty()
+            .append('<option value="">Seleccione una provincia</option>')
+            .prop("disabled", true);
+        // Limpiamos el select de localifdades
+        $("#eventLocality")
+        .empty()
+        .append('<option value="">Todas las localidades</option>')
+        .prop("disabled", true);
+        // Si no hay país seleccionado, no hacemos AJAX
+        if (idPais === "") {
+            return;
+        }
+
+        $.ajax({
+            url: "<%= request.getContextPath() %>/province",
+            type: "GET",
+            data: {
+                "id-pais": idPais
+            },
+            dataType: "json",
+            success: function (provincias) {
+                $.each(provincias, function (index, provincia) {
+                    $("#eventProvince").append(
+                        $("<option>", {
+                            value: provincia.id,
+                            text: provincia.name
+                        })
+                    );
+                });
+
+                $("#eventProvince").prop("disabled", false);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error AJAX:", status, error);
+                alert("No se pudieron cargar las provincias");
+            }
+        });
+    
+    });
+    
+    $("#eventProvince").on("change", function () {
+        let idProvincia = $(this).val();
+
+        $("#eventLocality")
+            .empty()
+            .append('<option value="">Todas las localidades</option>')
+            .prop("disabled", true);
+
+        if (idProvincia === "") {
+            return;
+        }
+
+        $.ajax({
+            url: "<%= request.getContextPath() %>/locality",
+            type: "GET",
+            data: {
+                provinceId: idProvincia
+            },
+            dataType: "json",
+            success: function (localidades) {
+                $.each(localidades, function (index, localidad) {
+                    $("#eventLocality").append(
+                        $("<option>", {
+                            value: localidad.id,
+                            text: localidad.name
+                        })
+                    );
+                });
+
+                $("#eventLocality").prop("disabled", false);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error AJAX:", status, error);
+                alert("No se pudieron cargar las localidades");
+            }
+        });
+    });
+    // recargar eventos y paginacion al darle a las flechas de paginacion o al boton buscar
+        const formulario = $("#eventSearchForm");
+
+        function actualizarResultados(pagina) {
+            $.ajax({
+                url: formulario.attr("action"),
+                type: "GET",
+                data: formulario.serialize()
+                    + "&pagina=" + encodeURIComponent(pagina),
+                dataType: "html",
+                success: function (html) {
+                    const paginaNueva =
+                        new DOMParser().parseFromString(html, "text/html");
+
+                    const tbodyNuevo =
+                        paginaNueva.querySelector(".events-table tbody");
+
+                    const paginacionNueva =
+                        paginaNueva.querySelector(".pagination-wrapper");
+
+                    if (!tbodyNuevo || !paginacionNueva) {
+                        alert("No se pudieron actualizar los eventos.");
+                        return;
+                    }
+
+                    $(".events-table tbody").html(tbodyNuevo.innerHTML);
+                    $(".pagination-wrapper").html(paginacionNueva.innerHTML);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error AJAX:", status, error);
+                    alert("No se pudieron cargar los eventos.");
+                }
+            });
+        }
+
+        // Al pulsar una flecha, pide la página indicada.
+        $(document).on("click", ".pagination-button[data-pagina]", function () {
+            actualizarResultados($(this).data("pagina"));
+        });
+
+        // Al buscar con nuevos filtros, vuelve a la página 1.
+        formulario.on("submit", function (evento) {
+            evento.preventDefault();
+            actualizarResultados(1);
+        });
+    });
+
+</script>

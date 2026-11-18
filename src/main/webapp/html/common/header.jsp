@@ -8,6 +8,7 @@
 <meta charset="UTF-8">
  <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 <script src="${pageContext.request.contextPath}/js/js.js?v=2"></script>
+<script src="${pageContext.request.contextPath}/js/jquery-3.7.1.min.js"></script>
 <title>THUB</title>
 <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/img/favicon.png">
 </head>
